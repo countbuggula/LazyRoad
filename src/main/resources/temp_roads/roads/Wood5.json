@@ -1,0 +1,119 @@
+{
+  "parts": [
+    {
+      "blockDatas": [
+        [
+          "minecraft:oak_log[axis=y]",
+          "minecraft:oak_planks",
+          "minecraft:oak_log[axis=y]",
+          "minecraft:oak_planks",
+          "minecraft:oak_log[axis=y]"
+        ],
+        [
+          "minecraft:oak_log[axis=y]",
+          "minecraft:air",
+          "minecraft:air",
+          "minecraft:air",
+          "minecraft:oak_log[axis=y]"
+        ],
+        [
+          "minecraft:oak_fence",
+          "minecraft:air",
+          "minecraft:air",
+          "minecraft:air",
+          "minecraft:oak_fence"
+        ],
+        [
+          "minecraft:oak_fence",
+          "minecraft:air",
+          "minecraft:air",
+          "minecraft:air",
+          "minecraft:oak_fence"
+        ],
+        [
+          "minecraft:oak_fence",
+          "minecraft:air",
+          "minecraft:stone",
+          "minecraft:air",
+          "minecraft:oak_fence"
+        ],
+        [
+          "minecraft:oak_fence",
+          "minecraft:oak_fence",
+          "minecraft:oak_fence",
+          "minecraft:oak_fence",
+          "minecraft:oak_fence"
+        ]
+      ],
+      "height": 6,
+      "width": 5,
+      "groundLayer": 0,
+      "repeatEvery": 7
+    },
+    {
+      "blockDatas": [
+        [
+          "minecraft:oak_log[axis=y]",
+          "minecraft:oak_planks",
+          "minecraft:oak_log[axis=y]",
+          "minecraft:oak_planks",
+          "minecraft:oak_log[axis=y]"
+        ],
+        [
+          "minecraft:oak_stairs[facing=north,half=bottom]",
+          "minecraft:air",
+          "minecraft:air",
+          "minecraft:air",
+          "minecraft:oak_stairs[facing=south,half=bottom]"
+        ],
+        [
+          "minecraft:air",
+          "minecraft:air",
+          "minecraft:air",
+          "minecraft:air",
+          "minecraft:air"
+        ],
+        [
+          "minecraft:air",
+          "minecraft:air",
+          "minecraft:air",
+          "minecraft:air",
+          "minecraft:air"
+        ],
+        [
+          "minecraft:air",
+          "minecraft:air",
+          "minecraft:air",
+          "minecraft:air",
+          "minecraft:air"
+        ],
+        [
+          "minecraft:air",
+          "minecraft:air",
+          "minecraft:air",
+          "minecraft:air",
+          "minecraft:air"
+        ]
+      ],
+      "height": 6,
+      "width": 5,
+      "groundLayer": 0,
+      "repeatEvery": 1
+    }
+  ],
+  "maxGradient": 2,
+  "stairs": {
+    "blockDatas": [
+      [
+        "minecraft:stone_slab[type=bottom]",
+        "minecraft:stone_slab[type=bottom]",
+        "minecraft:stone_slab[type=bottom]"
+      ]
+    ],
+    "height": 1,
+    "width": 3,
+    "groundLayer": 0,
+    "repeatEvery": 0
+  },
+  "maxSequence": 7
+}

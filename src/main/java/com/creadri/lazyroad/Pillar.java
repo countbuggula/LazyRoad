@@ -1,24 +1,18 @@
 package com.creadri.lazyroad;
 
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 
-/**
- *
- * @author creadri
- */
-public class Pillar implements Serializable {
+public class Pillar {
 
     private ArrayList<PillarPart> parts;
     private int maxSequence;
 
     public Pillar() {
-        this.parts = new ArrayList<PillarPart>();
+        this.parts = new ArrayList<>();
     }
 
     public Pillar(int partsSize) {
-        this.parts = new ArrayList<PillarPart>(partsSize);
+        this.parts = new ArrayList<>(partsSize);
     }
 
     public int size() {
@@ -31,21 +25,10 @@ public class Pillar implements Serializable {
 
     public void setPillarPart(int index, PillarPart part) {
         parts.set(index, part);
-        Collections.sort(parts);
-        maxSequence = parts.get(0).getRepeatEvery();
     }
 
     public boolean addPillarPart(PillarPart part) {
-        int index = Collections.binarySearch(parts, part);
-
-        if (index >= 0) {
-            return false;
-        }
-
         parts.add(part);
-        Collections.sort(parts);
-        maxSequence = parts.get(0).getRepeatEvery();
-
         return true;
     }
 
@@ -70,14 +53,8 @@ public class Pillar implements Serializable {
     }
 
     public PillarPart getRoadPartToBuild(int count) {
-        for (PillarPart part : parts) {
-            int re = part.getRepeatEvery();
-            count = count % re;
-
-            if (count == 0) {
-                return part;
-            }
-        }
-        return null;
+        if (parts.isEmpty()) return null;
+        if (maxSequence == 0) return parts.get(0);
+        return parts.get(count % maxSequence);
     }
 }

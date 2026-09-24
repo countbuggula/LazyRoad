@@ -1,5 +1,5 @@
 main: com.creadri.lazyroad.LazyRoad
-version: 0.8.2
+version: 0.9.0
 name: LazyRoad
 description: Make roads as you walk
 author: adreide
@@ -15,6 +15,7 @@ commands:
       /<command> stop
       /<command> undo
       /<command> straight
+      /<command> drops
       /<command> up
       /<command> down
       /<command> normal
@@ -31,6 +32,7 @@ commands:
       /<command> stop
       /<command> undo
       /<command> straight
+      /<command> drops
       /<command> up
       /<command> down
       /<command> normal
@@ -48,6 +50,7 @@ commands:
       /<command> stop
       /<command> undo
       /<command> straight
+      /<command> drops
       /<command> up
       /<command> down
       /<command> normal
@@ -92,6 +95,9 @@ permissions:
   lazyroad.straight:
     default: op
     description: straight sub-command
+  lazyroad.drops:
+    default: op
+    description: drops sub-command
   lazyroad.user:
     description: Allows users to build specific roads and pillars.
     children:
@@ -101,9 +107,11 @@ permissions:
       lazyroad.normal: true
       lazyroad.undo: true
       lazyroad.straight: true
+      lazyroad.drops: true
   lazyroad.build:
     description: Allows all LazyRoad commands.
     children:
       lazyroad.user: true
       lazyroad.lazyminer: true
       
+api-version: "1.21"

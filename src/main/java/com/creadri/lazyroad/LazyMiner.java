@@ -1,5 +1,9 @@
 package com.creadri.lazyroad;
 
+import com.google.gson.Gson;
+import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
@@ -38,12 +42,12 @@ public class LazyMiner {
     }
 
     public boolean SaveBlock(Block b) {
-        if (checkIfOne(b.getTypeId())) {
-            ItemStack drop = getDrop(b.getDrops(new ItemStack(Material.DIAMOND_PICKAXE)));
+        if (checkIfOne(b)) {
+            ItemStack drop = getDrop(b.getDrops(new org.bukkit.inventory.ItemStack(org.bukkit.Material.DIAMOND_PICKAXE)));
             if (!data.getDrops().isEmpty()) {
                 for (int i = 0; i < data.getDrops().size(); i++) {
-                    ItemStack item = data.get(i);
-                    if ((drop.getTypeId() == item.getTypeId()) && (drop.getDurability() == item.getDurability()) && (item.getMaxStackSize() != item.getAmount())) {
+                    org.bukkit.inventory.ItemStack item = data.get(i);
+                    if ((drop.getType() == item.getType()) && (item.getMaxStackSize() != item.getAmount())) {
                         item.setAmount(item.getAmount() + 1);
                         return true;
                     }
@@ -59,13 +63,11 @@ public class LazyMiner {
         }
     }
 
-    private boolean checkIfOne(int id) {
-        for (int i : data.getCheckIds()) {
-            if (i == id) {
-                return true;
-            }
-        }
-        return false;
+    private boolean checkIfOne(Block b) {
+        if (!b.getType().isSolid()) return false;
+        // The old code used a custom checkIds, but since IDs are gone we'll just allow solid blocks to be mined unless they are bedrock.
+        if (b.getType() == org.bukkit.Material.BEDROCK) return false;
+        return true;
     }
 
     private ItemStack getDrop(Collection<ItemStack> d) {
@@ -130,14 +132,12 @@ public class LazyMiner {
 
     public void saveMinerData(){
         File folder = new File(plugin.getDataFolder(), "miners");
-        File saveFile = new File(folder, player.getName().concat(".ser"));
+        File saveFile = new File(folder, player.getName().concat(".json"));
         try {
 
-            ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(saveFile));
-
-            oos.writeObject(data.serialize());
-
-            oos.close();
+            Gson gson = new Gson();
+            String json = gson.toJson(data);
+            Files.writeString(saveFile.toPath(), json);
 
         } catch (Exception ex) {
             player.sendMessage(ChatColor.DARK_RED + "An error occured when trying to save " + saveFile.getName());

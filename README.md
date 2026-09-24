@@ -1,18 +1,34 @@
-About
-======
+# LazyRoad (Modernized)
+A Minecraft plugin that allows you to quickly build complex roads, bridges, and tunnels effortlessly. Just type a command, start walking, and the road will gracefully build itself along your path, adhering to terrain changes!
 
-This is my fork of the LazyRoad plugin. It is intended primarily for bug fixes, but also adds a few new features as well.
+Originally created by `creadri`, this project has been fully modernized for modern Minecraft natively supporting the Purpur/Paper API.
 
+## Features
+* **Live Generation**: Roads assemble themselves dynamically as you walk.
+* **Smart Terrain Adapting**: The plugin naturally slopes and traces the landscape via `maxGradient` rules.
+* **Tunnels & Excavation**: Tunnel mode neatly bores precise bounding boxes through mountains with an optional `/lr drops` toggle to naturally harvest the excavated resources!
+* **Bridges & Suspensions**: Bridge mode actively locks your elevation, building out ahead of you so you can safely traverse ravines while natively drawing suspension columns/pillars down to the landscape.
+* **JSON Templates**: No more binary `.ser` files. Roads and pillars are now entirely JSON-based. Want to design a new road template? You can easily edit or share the structures in the `plugins/LazyRoad/roads` folder.
+* **Directional Block Support**: Modern directional items like Stairs, Lanterns, Logs, and Fences naturally rotate and connect themselves as the road changes directions dynamically.
+* **Infinite Undo**: Made a mistake? `/lr undo` is completely re-engineered to accurately restore landscapes perfectly backwards regardless of road length.
 
-LazyRoad
-======
+## Commands
+* `/lr <roadName>` - Begin painting a standard road.
+* `/lt <roadName>` - Begin tunneling (smoothly paves and bores through terrain).
+* `/lb <roadName> <pillarName>` - Build a bridge locking your altitude, spawning pillars underneath!
+* `/lr stop` - Stop building.
+* `/lr undo` - Revert the most recently built structure.
+* `/lr straight` - Toggle forcing the road layout perfectly straight (prevents snaking).
+* `/lr drops` - Toggle tunneling excavation drops.
+* `/lr reload` - Reload all JSON setups.
 
-Very simple plugin that allows you to quickly build roads, bridges, tunnels and more. Just type a command and then walk, the road will create itself as you walk
+## Forward Compatibility
+LazyRoad has been re-engineered to use dynamic string parsing for block generation rather than hardcoded enums. Because templates are built entirely from strings (like minecraft:sulfur), the plugin natively supports new Minecraft block versions without ever needing an internal plugin update or SDK recompile! Just enter the correct namespaced ID in your JSON template (e.g., minecraft:sulfur), and the server will natively evaluate it.
 
-Website: [http://dev.bukkit.org/server-mods/lazyroad/](http://dev.bukkit.org/server-mods/lazyroad/)
-Bugs/Suggestions: [LazyRoad Issues](https://github.com/creadri/LazyRoad/issues?sort=created&direction=desc&state=open)
+## JSON Templating
+LazyRoad will extract 6 Pillars and 10 Road templates by default. A template JSON maps blocks mathematically exactly like standard Minecraft `minecraft:blockid[state=value]`. You can easily clone any JSON to design your own architectures!
 
-Compilation
------------
+## Credits
+Created by creadri, with architecture patches by VeraLapsa and Z5T1. 
 
-I do not use maven to handle dependencies. I've kept the maven files for people who wish to continue using maven, however I will not be updating maven settings. Compile this however you'd like, it shouldn't be that complicated.
+*Special thanks to Google DeepMind\'s Gemini for assisting with the 2026 code modernization and JSON architecture migration of this project.*

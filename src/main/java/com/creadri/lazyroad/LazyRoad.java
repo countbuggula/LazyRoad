@@ -12,6 +12,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import com.google.gson.Gson;
+import java.nio.file.Files;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.PluginManager;
@@ -26,6 +28,7 @@ public class LazyRoad extends JavaPlugin {
     private boolean eventRegistered = false;
     // player properties
     private HashSet<String> playerPropStraight = new HashSet<String>();
+    private HashSet<String> playerPropDrops = new HashSet<String>();
     private HashMap<String, LazyMiner> lazyMiners = new HashMap<String, LazyMiner>();
     // roads and pillars
     private HashMap<String, Road> roads = new HashMap<String, Road>();
@@ -39,7 +42,7 @@ public class LazyRoad extends JavaPlugin {
 
         @Override
         public boolean accept(File dir, String name) {
-            return name.endsWith(".ser");
+            return name.endsWith(".json");
         }
     };
     // LazyMiner
@@ -56,10 +59,13 @@ public class LazyRoad extends JavaPlugin {
         // configuration files
         try {
 
-            roadsDirectory = new File(getDataFolder(), "roads");
+                        roadsDirectory = new File(getDataFolder(), "roads");
             pillarsDirectory = new File(getDataFolder(), "pillars");
 
-            if (!roadsDirectory.exists() || !pillarsDirectory.exists()) {
+            if (!roadsDirectory.exists()) roadsDirectory.mkdirs();
+            if (!pillarsDirectory.exists()) pillarsDirectory.mkdirs();
+
+            if (roadsDirectory.listFiles(filenameFilter).length == 0 || pillarsDirectory.listFiles(filenameFilter).length == 0) {
                 FileManager.copyDefaultRessources(getDataFolder(), "", "defaultRoads.zip", "defaultPillars.zip");
             }
 
@@ -70,7 +76,7 @@ public class LazyRoad extends JavaPlugin {
             undoSave = new File(getDataFolder(), "undo.dat");
 
             // load undo
-            playerListener.unSerializeRoadsUndos(undoSave);
+            playerListener.deserializeRoadsUndos(undoSave);
 
             if (!getConfig().contains("version")) {
                 this.saveDefaultConfig();
@@ -158,6 +164,10 @@ public class LazyRoad extends JavaPlugin {
 	    			completions.add("undo");
 	    		if ("straight".startsWith(args[0]))
 	    			completions.add("straight");
+	    		if ("drops".startsWith(args[0]))
+	    			completions.add("drops");
+	    		if ("straight".startsWith(args[0]))
+	    			completions.add("straight");
 	    		if ("up".startsWith(args[0]))
 	    			completions.add("up");
 	    		if ("down".startsWith(args[0]))
@@ -210,18 +220,15 @@ public class LazyRoad extends JavaPlugin {
 
             try {
                 name = f.getName();
-                name = name.substring(0, name.length() - 4);
+                name = name.substring(0, name.length() - 5);
                 name = name.toLowerCase();
 
-                ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f));
-
-                Road openRoad = (Road) ois.readObject();
-
+                Gson gson = new Gson();
+                String json = Files.readString(f.toPath());
+                Road openRoad = gson.fromJson(json, Road.class);
                 roads.put(name, openRoad);
 
-                ois.close();
-
-            } catch (ClassNotFoundException ex) {
+            } catch (Exception ex) {
                 log.warning("[LazyRoad] An error occured while parsing the road " + name + " !");
             }
         }
@@ -243,18 +250,15 @@ public class LazyRoad extends JavaPlugin {
 
             try {
                 name = f.getName();
-                name = name.substring(0, name.length() - 4);
+                name = name.substring(0, name.length() - 5);
                 name = name.toLowerCase();
 
-                ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f));
-
-                Pillar openPillar = (Pillar) ois.readObject();
-
+                Gson gson = new Gson();
+                String json = Files.readString(f.toPath());
+                Pillar openPillar = gson.fromJson(json, Pillar.class);
                 pillars.put(name, openPillar);
 
-                ois.close();
-
-            } catch (ClassNotFoundException ex) {
+            } catch (Exception ex) {
                 log.warning("[LazyRoad] An error occured while parsing the Pillar " + name + " !");
             }
         }
@@ -381,6 +385,18 @@ public class LazyRoad extends JavaPlugin {
      * @param name
      * @return
      */
+    public boolean getPlayerPropDrops(String name) {
+        return playerPropDrops.contains(name);
+    }
+
+    public void setPlayerPropDrops(String name, boolean state) {
+        if (state) {
+            playerPropDrops.add(name);
+        } else {
+            playerPropDrops.remove(name);
+        }
+    }
+
     public boolean getPlayerPropStraight(String name) {
         return playerPropStraight.contains(name);
     }

@@ -104,6 +104,15 @@ public class roadCommand extends CommandHandler {
                     }
                     return true;
 
+                } else if (player.hasPermission("lazyroad.drops") && args[0].equalsIgnoreCase("drops")) {
+                    if (plugin.getPlayerPropDrops(playerName)) {
+                        plugin.setPlayerPropDrops(playerName, false);
+                        player.sendMessage(org.bukkit.ChatColor.AQUA + "Tunnel drops disabled.");
+                    } else {
+                        plugin.setPlayerPropDrops(playerName, true);
+                        player.sendMessage(org.bukkit.ChatColor.AQUA + "Tunnel drops enabled. Tunneling will now drop items.");
+                    }
+                    return true;
                 } else if (player.hasPermission("lazyroad.straight") && args[0].equalsIgnoreCase("straight")) {
                     /**
                      * SUB-COMMAND STRAIGHT
@@ -142,6 +151,9 @@ public class roadCommand extends CommandHandler {
 
                                 re.setTunnel(true);
                             }
+                            if (bridge) {
+                                re.setBridge(true);
+                            }
                             if (plugin.getPlayerPropStraight(playerName)) {
                                 re.setStraight(false);
                             }
@@ -176,7 +188,11 @@ public class roadCommand extends CommandHandler {
                         RoadEnabled re = new RoadEnabled(player, road, plugin);
                         int count = 1;
                         re.setCount(count - 1);
-                        re.setTunnel(true);
+                        if (bridge) {
+                            re.setBridge(true);
+                        } else {
+                            re.setTunnel(true);
+                        }
                         re.setPillar(pillar);
 
                         if (plugin.getPlayerPropStraight(playerName)) {
@@ -218,6 +234,9 @@ public class roadCommand extends CommandHandler {
                         if (tunnel) {
                             re.setTunnel(true);
                         }
+                            if (bridge) {
+                                re.setBridge(true);
+                            }
                         if (plugin.getPlayerPropStraight(playerName)) {
                             re.setStraight(false);
                         }
@@ -256,7 +275,11 @@ public class roadCommand extends CommandHandler {
                             count = 1;
                         }
                         re.setCount(count - 1);
-                        re.setTunnel(true);
+                        if (bridge) {
+                            re.setBridge(true);
+                        } else {
+                            re.setTunnel(true);
+                        }
                         re.setPillar(pillar);
 
                         if (plugin.getPlayerPropStraight(playerName)) {
