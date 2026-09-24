@@ -31,4 +31,4 @@ LazyRoad will extract 6 Pillars and 10 Road templates by default. A template JSO
 ## Credits
 Created by creadri, with architecture patches by VeraLapsa and Z5T1. 
 
-*Special thanks to Google DeepMind\'s Gemini for assisting with the 2026 code modernization and JSON architecture migration of this project.*
+*Google DeepMind\'s Gemini assisted with the 2026 code modernization and JSON architecture migration of this project.*
