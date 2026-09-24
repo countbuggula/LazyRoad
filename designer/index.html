@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LazyRoad Designer</title>
+<style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; margin: 0; background: #282a36; color: #f8f8f2; }
+    .sidebar { width: 320px; background: #44475a; padding: 20px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; text-align: left; }
+    .main { flex-grow: 1; display: flex; flex-direction: column; padding: 20px; text-align: left; background: #282a36; }
+    canvas { background: #6272a4; border: 2px solid #50fa7b; cursor: crosshair; image-rendering: pixelated; margin-top: 10px; }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; background: #44475a; padding: 10px; border-radius: 5px; }
+    input, select, button, textarea { background: #282a36; color: #f8f8f2; border: 1px solid #6272a4; padding: 5px 8px; border-radius: 4px; }
+    button { background: #50fa7b; color: #282a36; font-weight: bold; cursor: pointer; border: none; }
+    button:hover { background: #40c963; }
+    button.save { background: #bd93f9; color: #fff; }
+    button.save:hover { background: #a272eb; }
+    button.danger { background: #ff5555; color: #fff; }
+    button.danger:hover { background: #e33e3e; }
+    .tabs { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px; }
+    .tab { padding: 5px 10px; background: #6272a4; border-radius: 3px; cursor: pointer; }
+    .tab.active { background: #50fa7b; color: #282a36; font-weight: bold; }
+    .recent-blocks { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+    .recent-block { padding: 3px 6px; background: #6272a4; font-size: 12px; border-radius: 3px; cursor: pointer; }
+    h2, h3, h4 { margin: 5px 0; }
+    .form-row { display: flex; justify-content: space-between; align-items: center; }
+    .form-row label { flex: 1; margin-right: 10px;font-size: 14px; }
+    .form-row input { flex: 1; max-width: 100px; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>LazyRoad Designer</h2>
+    
+    <div class="form-row">
+        <label>Type:</label>
+        <select id="templateType" onchange="updateDesignMode()">
+            <option value="road">Road</option>
+            <option value="pillar">Pillar</option>
+        </select>
+    </div>
+    
+    <div class="form-row" style="margin-top:10px;">
+        <label>Active Material:</label>
+    </div>
+    <input type="text" id="activeMaterial" value="minecraft:stone">
+    
+    <div style="font-size: 12px;">Direction (Click appends to material):</div>
+    <div style="display:flex; gap:5px;">
+        <button onclick="appendDirection('north')">N (Fwd)</button>
+        <button onclick="appendDirection('south')">S (Back)</button>
+        <button onclick="appendDirection('east')">E (Right)</button>
+        <button onclick="appendDirection('west')">W (Left)</button>
+    </div>
+
+    <h4>Recent Blocks</h4>
+    <div class="recent-blocks" id="recentBlocksList"></div>
+    
+    <hr style="width:100%; border-color:#6272a4; margin:10px 0;">
+    
+    <h3>Global Settings</h3>
+    <div class="form-row"><label>Max Gradient:</label> <input type="number" id="globalMaxGradient" value="2"></div>
+    <div class="form-row"><label>Max Sequence:</label> <input type="number" id="globalMaxSequence" value="10"></div>
+    <div class="form-row"><label>Stair Min Blocks:</label> <input type="number" id="globalStairMinBlocks" value="0"></div>
+
+    <hr style="width:100%; border-color:#6272a4; margin:10px 0;">
+
+        <hr style="width:100%; border-color:#6272a4; margin:10px 0;">
+    <h3>Import / Export</h3>
+    <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+        <input type="file" id="fileInput" accept=".json" style="display:none;" onchange="handleFileUpload(event)">
+        <button onclick="triggerLoad('road')" style="flex:1; background:#8be9fd; color:#282a36;">Load Road</button>
+        <button onclick="triggerLoad('pillar')" style="flex:1; background:#8be9fd; color:#282a36;">Load Pillar</button>
+    </div>
+    <div style="display: flex; gap: 5px; margin-top: 5px;">
+        <button class="save" id="exportBtn" style="flex:1;">Generate JSON</button>
+    </div>
+    <textarea id="jsonOutput" rows="6" placeholder="Paste JSON here to load manually..." style="margin-top:5px;"></textarea>
+    <button onclick="handleManualLoad()" style="width:100%; margin-top:5px; font-size:11px; background:#6272a4;">Load from Textbox</button>
+</div>
+
+<div class="main">
+    <div class="toolbar">
+        <button id="addPartBtn">Add Road Part</button>
+        <button id="editStairsBtn" style="background:#ffb86c; color:#282a36;">Show Stairs</button>
+    </div>
+    <div class="tabs" id="partsTabs"></div>
+    
+    <div class="toolbar" style="margin-top:15px;" id="partToolbar">
+        <div class="form-row" style="margin-right:15px;">
+            <label>Width:</label> <input type="number" id="partWidth" value="5" min="1" onchange="updatePartDimensions()">
+        </div>
+        <div class="form-row" style="margin-right:15px;">
+            <label>Height:</label> <input type="number" id="partHeight" value="6" min="1" onchange="updatePartDimensions()">
+        </div>
+        <div class="form-row" style="margin-right:15px;">
+            <label>Ground Index:</label> <input type="number" id="partGroundLayer" value="0" min="0" onchange="savePartProperties()">
+        </div>
+        <div class="form-row" style="margin-right:15px;">
+            <label>Repeat Every:</label> <input type="number" id="partRepeatEvery" value="1" min="1" onchange="savePartProperties()">
+        </div>
+        <button class="danger" id="deletePartBtn">Delete Part</button>
+    </div>
+
+    <canvas id="editorCanvas" width="800" height="500"></canvas>
+    <p style="color:#8be9fd; font-size:12px;">Left Click: Place block | Right Click: Remove block<br>Note: Y=0 is at the bottom of the grid.</p>
+</div>
+
+<script>
+    function getBlockColors(material) {
+        const mat = material.toLowerCase();
+                let bg = '#f1fa8c'; // default yellow
+        
+        // Light Sources (Highest Priority)
+        if (mat.includes('redstone') && mat.includes('torch')) bg = '#ff3333';
+        else if (mat.includes('torch') || mat.includes('glowstone') || mat.includes('lantern') || mat.includes('lamp') || mat.includes('sea_lantern')) bg = '#ffea00';
+        
+        // Wood / Dirt / Vegetation
+        else if (mat.includes('dirt') || mat.includes('wood') || mat.includes('brown')) bg = '#6e4a2d';
+        else if (mat.includes('dark oak') || mat.includes('dark_oak')) bg = '#3d2613';
+        else if (mat.includes('pale oak') || mat.includes('pale_oak')) bg = '#e3d6c1';
+        else if (mat.includes('oak')) bg = '#a88656';
+        else if (mat.includes('spruce')) bg = '#573d26';
+        else if (mat.includes('birch')) bg = '#d4c592';
+        else if (mat.includes('jungle')) bg = '#a4715f';
+        else if (mat.includes('acacia')) bg = '#a75037';
+        else if (mat.includes('cherry')) bg = '#ffb6c1';
+        else if (mat.includes('bamboo')) bg = '#6ea14b';
+        else if (mat.includes('crimson')) bg = '#7e353e';
+        else if (mat.includes('dead')) bg = '#7d6148';
+        else if (mat.includes('mossy')) bg = '#5b7145';
+        else if (mat.includes('nether')) bg = '#4c1e1e';
+        else if (mat.includes('sand')) bg = '#d6cd98';
+        
+        // Stones / Minerals
+        else if (mat.includes('light gray') || mat.includes('light_gray')) bg = '#ababab';
+        else if (mat.includes('gray') || mat.includes('grey') || mat.includes('stone') || mat.includes('tuff')) bg = '#6c6f6c';
+        else if (mat.includes('deepslate')) bg = '#3b3b3b';
+        else if (mat.includes('diorite')) bg = '#c2c2c4';
+        else if (mat.includes('brick')) bg = '#8f4334';
+        else if (mat.includes('iron')) bg = '#e6e6e6';
+        else if (mat.includes('oxidized')) bg = '#419688';
+        else if (mat.includes('copper')) bg = '#b86e4f';
+        else if (mat.includes('sulphur')) bg = '#e3e364';
+        else if (mat.includes('prismarine')) bg = '#61a39f';
+        // Explicit Colors
+        else if (mat.includes('light blue') || mat.includes('light_blue')) bg = '#3ab3da';
+        else if (mat.includes('blue')) bg = '#3c44aa';
+        else if (mat.includes('cyan')) bg = '#169c9c';
+        else if (mat.includes('lime')) bg = '#80c71f';
+        else if (mat.includes('green')) bg = '#5e7c16';
+        else if (mat.includes('pink')) bg = '#f28fad';
+        else if (mat.includes('magenta')) bg = '#c74ebd';
+        else if (mat.includes('purple')) bg = '#8932b8';
+        else if (mat.includes('black')) bg = '#1d1d21';
+        else if (mat.includes('white')) bg = '#f9fffe';
+        else if (mat.includes('orange')) bg = '#f07613';
+        else if (mat.includes('red') || mat.includes('cinnabar')) bg = '#b02e26';
+        else if (mat.includes('yellow')) bg = '#fed83d';
+        
+        // Calculate text color over background
+        const hex = bg.replace('#','');
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        const yiq = ((r*299)+(g*587)+(b*114))/1000;
+        const textSrc = (yiq >= 128) ? '#111' : '#fff';
+        
+        return { bg, fg: textSrc };
+    }
+    const canvas = document.getElementById('editorCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    let template = {
+        type: "road",
+        maxGradient: 2,
+        maxSequence: 10,
+        stairMinBlocks: 0,
+        parts: [],
+        stairs: null
+    };
+
+    let activePartIndex = -1; 
+    let isEditingStairs = false;
+    let recentBlocks = ["minecraft:stone", "minecraft:air", "minecraft:oak_fence"];
+    const CELL_SIZE = 40;
+    
+    const playerImg = new Image();
+    playerImg.src = 'playerback.png';
+
+    function init() {
+        addNewPart(); // Start with Part 1
+        updateRecentBlocksUI();
+        renderTabs();
+    }
+
+    function createEmptyGrid(width, height) {
+        return Array(height).fill().map(() => Array(width).fill("minecraft:air"));
+    }
+
+    function addNewPart() {
+        const newPart = {
+            width: 5,
+            height: 6,
+            groundLayer: 0,
+            repeatEvery: template.parts.length === 0 ? 1 : (template.parts.length * 5),
+            grid: createEmptyGrid(5, 6)
+        };
+        template.parts.push(newPart);
+        selectPart(template.parts.length - 1);
+        renderTabs();
+    }
+    
+    function initStairs() {
+        if (!template.stairs) {
+            template.stairs = { width: 3, height: 1, groundLayer: 0, repeatEvery: 0, grid: createEmptyGrid(3, 1) };
+        }
+    }
+
+    function getActivePart() {
+        if (isEditingStairs) return template.stairs;
+        if (activePartIndex >= 0 && activePartIndex < template.parts.length) return template.parts[activePartIndex];
+        return null;
+    }
+
+    function selectPart(index) {
+        isEditingStairs = false;
+        activePartIndex = index;
+        loadPartProperties();
+        renderTabs();
+        draw();
+    }
+    
+    function toggleStairs() {
+        isEditingStairs = true;
+        initStairs();
+        loadPartProperties();
+        renderTabs();
+        draw();
+    }
+
+    function updatePartDimensions() {
+        const part = getActivePart();
+        if (!part) return;
+        
+        const newW = parseInt(document.getElementById('partWidth').value) || 5;
+        const newH = parseInt(document.getElementById('partHeight').value) || 6;
+        
+        const newGrid = createEmptyGrid(newW, newH);
+        for(let y = 0; y < Math.min(part.height, newH); y++) {
+            for(let x = 0; x < Math.min(part.width, newW); x++) {
+                // To keep centering correct, might need an offset, but simple bottom-left alignment for now
+                // Actually, original plugin centers horizontally.
+                // Let's copy from center to center.
+                const oldCx = Math.floor(part.width / 2);
+                const newCx = Math.floor(newW / 2);
+                const xOffset = newCx - oldCx;
+                if (x + xOffset >= 0 && x + xOffset < newW) {
+                    newGrid[y][x + xOffset] = part.grid[y][x];
+                }
+            }
+        }
+        
+        part.width = newW;
+        part.height = newH;
+        part.grid = newGrid;
+        draw();
+    }
+    
+    function savePartProperties() {
+        const part = getActivePart();
+        if (!part) return;
+        part.groundLayer = parseInt(document.getElementById('partGroundLayer').value) || 0;
+        part.repeatEvery = parseInt(document.getElementById('partRepeatEvery').value) || 1;
+        draw();
+    }
+
+    function loadPartProperties() {
+        const part = getActivePart();
+        if (!part) return;
+        document.getElementById('partWidth').value = part.width;
+        document.getElementById('partHeight').value = part.height;
+        document.getElementById('partGroundLayer').value = part.groundLayer;
+        
+        const rpeInput = document.getElementById('partRepeatEvery');
+        if (isEditingStairs) {
+            rpeInput.disabled = true;
+            rpeInput.value = 0;
+            document.getElementById('partToolbar').style.background = '#ffb86c33';
+        } else {
+            rpeInput.disabled = false;
+            rpeInput.value = part.repeatEvery;
+            document.getElementById('partToolbar').style.background = 'transparent';
+        }
+    }
+
+    function renderTabs() {
+        const tabsDiv = document.getElementById('partsTabs');
+        tabsDiv.innerHTML = '';
+        
+        template.parts.forEach((p, i) => {
+            const btn = document.createElement('div');
+            btn.className = 'tab' + (!isEditingStairs && activePartIndex === i ? ' active' : '');
+            btn.textContent = 'Part ' + (p.repeatEvery);
+            btn.onclick = () => selectPart(i);
+            tabsDiv.appendChild(btn);
+        });
+        
+        if (isEditingStairs) {
+            const btn = document.createElement('div');
+            btn.className = 'tab active';
+            btn.style.background = '#ffb86c';
+            btn.textContent = 'Stairs (Editing)';
+            tabsDiv.appendChild(btn);
+        }
+    }
+
+    function draw() {
+        const part = getActivePart();
+        if (!part) return;
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Offset rendering so it appears centered
+        const gridWPix = part.width * CELL_SIZE;
+        const gridHPix = part.height * CELL_SIZE;
+        const offsetX = Math.floor((canvas.width - gridWPix) / 2);
+        const offsetY = Math.floor((canvas.height - gridHPix) / 2);
+
+        // Draw grid setup
+        // In simple JSON, index 0 is ground (bottom), index H-1 is top.
+        // Canvas Y=0 is TOP. So we render row=y at canvas Y = offsetY + (part.height - 1 - y) * CELL_SIZE
+        
+        for (let y = 0; y < part.height; y++) {
+            for (let x = 0; x < part.width; x++) {
+                const drawY = offsetY + (part.height - 1 - y) * CELL_SIZE;
+                const drawX = offsetX + x * CELL_SIZE;
+                
+                ctx.strokeStyle = '#44475a';
+                ctx.strokeRect(drawX, drawY, CELL_SIZE, CELL_SIZE);
+                
+                const block = part.grid[y][x];
+                                if (block && block !== "minecraft:air") {
+                    const colors = getBlockColors(block);
+                    ctx.fillStyle = colors.bg;
+                    ctx.fillRect(drawX + 1, drawY + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+                    ctx.fillStyle = colors.fg;
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'center';
+                    
+                    let shortName = block.replace('minecraft:', '');
+                    // Truncate long state tags for rendering
+                    if(shortName.indexOf('[') > -1) {
+                         const base = shortName.substring(0, shortName.indexOf('['));
+                         const tag = shortName.substring(shortName.indexOf('['));
+                         ctx.fillText(base, drawX + CELL_SIZE/2, drawY + Math.floor(CELL_SIZE/2) - 3);
+                         ctx.fillStyle = '#ff5555';
+                         ctx.fillText(tag.substring(1, tag.length-1), drawX + CELL_SIZE/2, drawY + Math.floor(CELL_SIZE/2) + 8);
+                    } else {
+                         ctx.fillText(shortName, drawX + CELL_SIZE/2, drawY + CELL_SIZE/2 + 3);
+                    }
+                }
+            }
+        }
+        
+        // Draw Player Indicator IF road (or maybe pillars too, but flipped?)
+        if (playerImg.complete && playerImg.width > 0) {
+            // Player stands at centerX, feet at groundLayer.
+            const pW = CELL_SIZE;
+            const pH = CELL_SIZE * 2;
+            const cx = Math.floor(part.width / 2);
+            // groundLayer is the Y level ON WHICH player walks.
+            // If groundLayer = 0, feet are directly above the block y=0.
+            // Wait, in minecraft player stands ON the ground. Is groundlayer the block below feet?
+            // Yes. In LazyRoad, groundLayer is the block they walk ON.
+            const drawX = offsetX + cx * CELL_SIZE;
+            
+            // The block they walk ON is at row `part.groundLayer`.
+            // So its top coordinate is drawY. Feet start there.
+            const floorBlockYPix = offsetY + (part.height - 1 - part.groundLayer) * CELL_SIZE;
+            
+            let playerDrawY = floorBlockYPix - pH;
+            
+            ctx.globalAlpha = 0.7;
+            if (template.type === 'pillar') {
+                // Pillars build upside down. Just flip the player image for fun.
+                ctx.save();
+                // Player hangs upside down?
+                ctx.translate(drawX + pW/2, floorBlockYPix + pH/2);
+                ctx.scale(1, -1);
+                ctx.drawImage(playerImg, -pW/2, -pH/2, pW, pH);
+                ctx.restore();
+            } else {
+                ctx.drawImage(playerImg, drawX, playerDrawY, pW, pH);
+            }
+            ctx.globalAlpha = 1.0;
+        }
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+        const part = getActivePart();
+        if (!part) return;
+        
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        
+        const mouseX = (e.clientX - rect.left) * scaleX;
+        const mouseY = (e.clientY - rect.top) * scaleY;
+        
+        const gridWPix = part.width * CELL_SIZE;
+        const gridHPix = part.height * CELL_SIZE;
+        const offsetX = Math.floor((canvas.width - gridWPix) / 2);
+        const offsetY = Math.floor((canvas.height - gridHPix) / 2);
+        
+        const x = Math.floor((mouseX - offsetX) / CELL_SIZE);
+        const drawY = Math.floor((mouseY - offsetY) / CELL_SIZE);
+        
+        // Convert drawY back to grid Y
+        const y = part.height - 1 - drawY;
+        
+        if (x >= 0 && x < part.width && y >= 0 && y < part.height) {
+            let material = document.getElementById('activeMaterial').value;
+            if (material.trim() === '') material = 'minecraft:air';
+            
+            if (e.button === 0) { // Left click
+                part.grid[y][x] = material;
+                addRecentBlock(material);
+            } else if (e.button === 2) { // Right click
+                part.grid[y][x] = "minecraft:air";
+            }
+            draw();
+        }
+    });
+    
+    canvas.addEventListener('contextmenu', e => e.preventDefault());
+    playerImg.onload = draw;
+    
+    // UI Helpers
+    document.getElementById('addPartBtn').onclick = addNewPart;
+    document.getElementById('deletePartBtn').onclick = () => {
+        if(isEditingStairs) {
+            template.stairs = null;
+            if(template.parts.length > 0) selectPart(0);
+            return;
+        }
+        if (template.parts.length > 1) {
+            template.parts.splice(activePartIndex, 1);
+            selectPart(Math.max(0, activePartIndex - 1));
+        } else {
+            alert("A template must have at least one part!");
+        }
+    };
+    document.getElementById('editStairsBtn').onclick = toggleStairs;
+    
+    function appendDirection(dir) {
+        let input = document.getElementById('activeMaterial');
+        let val = input.value;
+        if (val.indexOf('[') > -1) {
+            val = val.replace(/\[facing=[^\]]+\]/, ''); // Strip old facing
+            if(val.indexOf(']') === val.length - 1) {
+                 val = val.substring(0, val.length - 1) + ',facing=' + dir + ']';
+            } else {
+                 val += '[facing=' + dir + ']';
+            }
+        } else {
+            val += '[facing=' + dir + ']';
+        }
+        input.value = val;
+    }
+    
+    function addRecentBlock(mat) {
+        if (mat === 'minecraft:air') return;
+        if (!recentBlocks.includes(mat)) {
+            recentBlocks.unshift(mat);
+            if (recentBlocks.length > 15) recentBlocks.pop();
+            updateRecentBlocksUI();
+        }
+    }
+    
+    function updateRecentBlocksUI() {
+        const container = document.getElementById('recentBlocksList');
+        container.innerHTML = '';
+        recentBlocks.forEach(b => {
+            const el = document.createElement('div');
+            el.className = 'recent-block';
+            el.textContent = b.replace('minecraft:','');
+            el.onclick = () => { document.getElementById('activeMaterial').value = b; };
+            container.appendChild(el);
+        });
+    }
+
+    document.getElementById('exportBtn').onclick = () => {
+        let jsonOutput = {
+            maxGradient: parseInt(document.getElementById('globalMaxGradient').value),
+            maxSequence: parseInt(document.getElementById('globalMaxSequence').value),
+            stairMinBlocks: parseInt(document.getElementById('globalStairMinBlocks').value),
+            parts: template.parts.map(p => ({
+                height: p.height,
+                width: p.width,
+                groundLayer: p.groundLayer,
+                repeatEvery: p.repeatEvery,
+                blockDatas: [...p.grid] // We structured grid as [y][x], which perfectly matches Simple3.json row 0 = bottom
+            }))
+        };
+        
+        if (template.stairs && template.stairs.grid) {
+            jsonOutput.stairs = {
+                height: template.stairs.height,
+                width: template.stairs.width,
+                groundLayer: template.stairs.groundLayer,
+                repeatEvery: 0,
+                blockDatas: [...template.stairs.grid]
+            };
+        }
+        
+        document.getElementById('jsonOutput').value = JSON.stringify(jsonOutput, null, 2);
+    };
+
+    window.updateDesignMode = function() {
+        template.type = document.getElementById('templateType').value;
+        draw();
+    };
+
+        let loadTargetType = 'road';
+    
+    function triggerLoad(type) {
+        loadTargetType = type;
+        document.getElementById('fileInput').click();
+    }
+    
+    function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            parseAndLoadJson(e.target.result, loadTargetType);
+            event.target.value = ''; // reset
+        };
+        reader.readAsText(file);
+    }
+    
+    function handleManualLoad() {
+        const text = document.getElementById('jsonOutput').value;
+        if (!text.trim()) return alert("Please paste JSON into the textbox first!");
+        parseAndLoadJson(text, document.getElementById('templateType').value);
+    }
+    
+    function parseAndLoadJson(jsonString, targetType) {
+        try {
+            const data = JSON.parse(jsonString);
+            
+            // Set global variables
+            document.getElementById('templateType').value = targetType;
+            template.type = targetType;
+            
+            // Note: Use standard HTML operators for value setting
+            document.getElementById('globalMaxGradient').value = data.maxGradient || 2;
+            document.getElementById('globalMaxSequence').value = data.maxSequence || 10;
+            document.getElementById('globalStairMinBlocks').value = data.stairMinBlocks || 0;
+            
+            template.parts = [];
+            if (data.parts && Array.isArray(data.parts)) {
+                data.parts.forEach(p => {
+                    template.parts.push({
+                        width: p.width,
+                        height: p.height,
+                        groundLayer: p.groundLayer || 0,
+                        repeatEvery: p.repeatEvery || 1,
+                        grid: p.blockDatas // Should natively map to our array of arrays
+                    });
+                });
+            }
+            
+            if (data.stairs && data.stairs.blockDatas) {
+                template.stairs = {
+                    width: data.stairs.width,
+                    height: data.stairs.height,
+                    groundLayer: data.stairs.groundLayer || 0,
+                    repeatEvery: 0,
+                    grid: data.stairs.blockDatas
+                };
+            } else {
+                template.stairs = null;
+            }
+            
+            if (template.parts.length === 0) addNewPart();
+            else selectPart(0);
+            
+            alert("Loaded successfully!");
+        } catch (err) {
+            alert("Error parsing JSON: " + err.message);
+        }
+    }
+    init();
+</script>
+</body>
+</html>
