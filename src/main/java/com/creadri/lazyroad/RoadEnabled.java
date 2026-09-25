@@ -256,7 +256,7 @@ public class RoadEnabled {
 
     
     private void putBlock(int x, int y, int z, String stringData, Direction dir) {
-        if (stringData == null || stringData.equals("minecraft:air")) {
+        if (stringData == null) {
             return;
         }
 
@@ -301,6 +301,56 @@ public class RoadEnabled {
         undo.put(b);
 
         b.setBlockData(targetData, true);
+    }
+
+    private void drawPillarBase(PillarPart pillarPart, int x, int z, int startY, int width, Direction dir, boolean tunnel, boolean bridge) {
+        if (pillarPart == null || pillarPart.getBaseBlockDatas() == null || pillarPart.getBaseHeight() <= 0) return;
+        int baseH = pillarPart.getBaseHeight();
+        String[][] baseBlocks = pillarPart.getBaseBlockDatas();
+        int newX = x;
+        int newZ = z;
+        if (dir == Direction.NORTH || dir == Direction.SOUTH) {
+            newX = (tunnel || bridge) ? (dir == Direction.NORTH ? x - 1 : x + 1) : x;
+        } else {
+            newZ = (tunnel || bridge) ? (dir == Direction.WEST ? z + 1 : z - 1) : z;
+        }
+        
+        for (int mh = 0; mh < baseH; mh++) {
+            // baseBlocks[0] is visually top of base. baseBlocks[baseH-1] is bottom (touching ground).
+            // startY is the block directly ON TOP of the terrain.
+            // If base sits on terrain, finalY goes UP based on mh.
+            int finalY = startY + (baseH - 1 - mh); 
+            
+            if (dir == Direction.NORTH) {
+                newZ = z + (width / 2);
+            } else if (dir == Direction.SOUTH) {
+                newZ = z - (width / 2);
+            } else if (dir == Direction.WEST) {
+                newX = x + (width / 2);
+            } else if (dir == Direction.EAST) {
+                newX = x - (width / 2);
+            }
+            
+            for (int j = 0; j < width; j++) {
+                String blockData = baseBlocks[mh][j];
+                if (blockData != null && !blockData.equals("minecraft:air")) {
+                    Block b2 = world.getBlockAt(newX, finalY, newZ);
+                    if (isToIgnoreForPillar(b2)) {
+                        undo.put(b2);
+                        try {
+                            if (!blockData.contains(":")) {
+                                blockData = "minecraft:" + blockData;
+                            }
+                            b2.setBlockData(Bukkit.getServer().createBlockData(blockData), true);
+                        } catch (Exception e) {}
+                    }
+                }
+                if (dir == Direction.NORTH) newZ--;
+                else if (dir == Direction.SOUTH) newZ++;
+                else if (dir == Direction.WEST) newX--;
+                else if (dir == Direction.EAST) newX++;
+            }
+        }
     }
 
     private int getYFirstBlock(int x, int y, int z) {
@@ -764,7 +814,14 @@ public class RoadEnabled {
                         if (isToIgnoreForPillar(block)) {
                             if (!blockData.equals("minecraft:air") || !block.getType().isAir()) {
                                 undo.put(block);
-                                block.setBlockData(Bukkit.getServer().createBlockData(blockData), true);
+                                try {
+                                    if (!blockData.contains(":")) {
+                                        blockData = "minecraft:" + blockData;
+                                    }
+                                    block.setBlockData(Bukkit.getServer().createBlockData(blockData), true);
+                                } catch (Exception ex) {
+                                    System.out.println("[LazyRoad] Invalid BlockData for Pillar Core: " + blockData);
+                                }
                                 buildBlock = true;
                             }
                         }
@@ -777,6 +834,7 @@ public class RoadEnabled {
                 newY--;
                 i++;
             } while ((buildBlock || i < height) && buildUntil > 0 && newY > 0);
+            drawPillarBase(pillarPart, x, z, newY + 1, width, Direction.NORTH, tunnel, bridge);
         }
     }
 
@@ -918,7 +976,14 @@ public class RoadEnabled {
                         if (isToIgnoreForPillar(block)) {
                             if (!blockData.equals("minecraft:air") || !block.getType().isAir()) {
                                 undo.put(block);
-                                block.setBlockData(Bukkit.getServer().createBlockData(blockData), true);
+                                try {
+                                    if (!blockData.contains(":")) {
+                                        blockData = "minecraft:" + blockData;
+                                    }
+                                    block.setBlockData(Bukkit.getServer().createBlockData(blockData), true);
+                                } catch (Exception ex) {
+                                    System.out.println("[LazyRoad] Invalid BlockData for Pillar Core: " + blockData);
+                                }
                                 buildBlock = true;
                             }
                         }
@@ -931,6 +996,7 @@ public class RoadEnabled {
                 newY--;
                 i++;
             } while ((buildBlock || i < height) && buildUntil > 0 && newY > 0);
+            drawPillarBase(pillarPart, x, z, newY + 1, width, Direction.SOUTH, tunnel, bridge);
         }
     }
 
@@ -1070,7 +1136,14 @@ public class RoadEnabled {
                         if (isToIgnoreForPillar(block)) {
                             if (!blockData.equals("minecraft:air") || !block.getType().isAir()) {
                                 undo.put(block);
-                                block.setBlockData(Bukkit.getServer().createBlockData(blockData), true);
+                                try {
+                                    if (!blockData.contains(":")) {
+                                        blockData = "minecraft:" + blockData;
+                                    }
+                                    block.setBlockData(Bukkit.getServer().createBlockData(blockData), true);
+                                } catch (Exception ex) {
+                                    System.out.println("[LazyRoad] Invalid BlockData for Pillar Core: " + blockData);
+                                }
                                 buildBlock = true;
                             }
                         }
@@ -1083,6 +1156,7 @@ public class RoadEnabled {
                 newY--;
                 i++;
             } while ((buildBlock || i < height) && buildUntil > 0 && newY > 0);
+            drawPillarBase(pillarPart, x, z, newY + 1, width, Direction.WEST, tunnel, bridge);
         }
     }
 
@@ -1222,7 +1296,14 @@ public class RoadEnabled {
                         if (isToIgnoreForPillar(block)) {
                             if (!blockData.equals("minecraft:air") || !block.getType().isAir()) {
                                 undo.put(block);
-                                block.setBlockData(Bukkit.getServer().createBlockData(blockData), true);
+                                try {
+                                    if (!blockData.contains(":")) {
+                                        blockData = "minecraft:" + blockData;
+                                    }
+                                    block.setBlockData(Bukkit.getServer().createBlockData(blockData), true);
+                                } catch (Exception ex) {
+                                    System.out.println("[LazyRoad] Invalid BlockData for Pillar Core: " + blockData);
+                                }
                                 buildBlock = true;
                             }
                         }
@@ -1235,6 +1316,7 @@ public class RoadEnabled {
                 newY--;
                 i++;
             } while ((buildBlock || i < height) && buildUntil > 0 && newY > 0);
+            drawPillarBase(pillarPart, x, z, newY + 1, width, Direction.EAST, tunnel, bridge);
         }
     }
 
@@ -1312,3 +1394,4 @@ public class RoadEnabled {
         return world;
     }
 }
+
