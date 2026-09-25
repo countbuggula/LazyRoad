@@ -65,9 +65,7 @@ public class LazyRoad extends JavaPlugin {
             if (!roadsDirectory.exists()) roadsDirectory.mkdirs();
             if (!pillarsDirectory.exists()) pillarsDirectory.mkdirs();
 
-            if (roadsDirectory.listFiles(filenameFilter).length == 0 || pillarsDirectory.listFiles(filenameFilter).length == 0) {
-                FileManager.copyDefaultRessources(getDataFolder(), "", "defaultRoads.zip", "defaultPillars.zip");
-            }
+            PluginUtils.extractResourceZip(this, "defaultRoads.zip", getDataFolder()); PluginUtils.extractResourceZip(this, "defaultPillars.zip", getDataFolder());
 
             // load roads and pillars
             loadRoads();
@@ -421,3 +419,4 @@ public class LazyRoad extends JavaPlugin {
     }
     
 }
+

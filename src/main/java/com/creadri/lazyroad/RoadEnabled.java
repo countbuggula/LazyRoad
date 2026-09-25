@@ -216,7 +216,7 @@ public class RoadEnabled {
         }
 
         // saving current data to old ones
-        oldDir = dir;
+        oldY = y; hasBuilt = true; count++; oldDir = dir;
         oldX = x;
         oldZ = z;
         oldY = y;
@@ -254,55 +254,46 @@ public class RoadEnabled {
         return null;
     }
 
-    
     private void putBlock(int x, int y, int z, String stringData, Direction dir) {
-        if (stringData == null) {
+        if (stringData == null || (!this.tunnel && stringData.equals("minecraft:air"))) {
             return;
         }
 
         Block b = world.getBlockAt(x, y, z);
-                BlockData targetData = Bukkit.getServer().createBlockData(stringData);
-
-        if (targetData instanceof org.bukkit.block.data.Directional) {
-            org.bukkit.block.data.Directional dirData = (org.bukkit.block.data.Directional) targetData;
-            org.bukkit.block.BlockFace newFace = dirData.getFacing();
-            
-            int rotations = 0;
-            switch(dir) {
-                case SOUTH: rotations = 0; break;
-                case WEST: rotations = 1; break;
-                case NORTH: rotations = 2; break;
-                case EAST: rotations = 3; break;
-            }
-            
-            for (int i=0; i<rotations; i++) {
-                switch(newFace) {
-                    case NORTH: newFace = org.bukkit.block.BlockFace.EAST; break;
-                    case EAST: newFace = org.bukkit.block.BlockFace.SOUTH; break;
-                    case SOUTH: newFace = org.bukkit.block.BlockFace.WEST; break;
-                    case WEST: newFace = org.bukkit.block.BlockFace.NORTH; break;
-                    case NORTH_EAST: newFace = org.bukkit.block.BlockFace.SOUTH_EAST; break;
-                    case SOUTH_EAST: newFace = org.bukkit.block.BlockFace.SOUTH_WEST; break;
-                    case SOUTH_WEST: newFace = org.bukkit.block.BlockFace.NORTH_WEST; break;
-                    case NORTH_WEST: newFace = org.bukkit.block.BlockFace.NORTH_EAST; break;
-                    default: break;
+        try {
+            BlockData targetData = Bukkit.getServer().createBlockData(stringData);
+            if (targetData instanceof org.bukkit.block.data.Directional) {
+                org.bukkit.block.data.Directional dirData = (org.bukkit.block.data.Directional) targetData;
+                org.bukkit.block.BlockFace newFace = dirData.getFacing();
+                int rotations = 0;
+                switch(dir) {
+                    case SOUTH: rotations = 0; break;
+                    case WEST: rotations = 1; break;
+                    case NORTH: rotations = 2; break;
+                    case EAST: rotations = 3; break;
                 }
+                for (int i=0; i<rotations; i++) {
+                    switch(newFace) {
+                        case NORTH: newFace = org.bukkit.block.BlockFace.EAST; break;
+                        case EAST: newFace = org.bukkit.block.BlockFace.SOUTH; break;
+                        case SOUTH: newFace = org.bukkit.block.BlockFace.WEST; break;
+                        case WEST: newFace = org.bukkit.block.BlockFace.NORTH; break;
+                        case NORTH_EAST: newFace = org.bukkit.block.BlockFace.SOUTH_EAST; break;
+                        case SOUTH_EAST: newFace = org.bukkit.block.BlockFace.SOUTH_WEST; break;
+                        case SOUTH_WEST: newFace = org.bukkit.block.BlockFace.NORTH_WEST; break;
+                        case NORTH_WEST: newFace = org.bukkit.block.BlockFace.NORTH_EAST; break;
+                        default: break;
+                    }
+                }
+                try { dirData.setFacing(newFace); targetData = dirData; } catch (Exception e) {}
             }
-            try {
-                dirData.setFacing(newFace);
-                targetData = dirData;
-            } catch (Exception e) {}
+            if (b.getBlockData().matches(targetData)) return;
+            undo.put(b);
+            b.setBlockData(targetData, false);
+        } catch (IllegalArgumentException ex) {
+            // Silently ignore invalid block data strings like "minecraft:lantern_slab" produced by custom templates
         }
-
-        if (b.getBlockData().matches(targetData)) {
-            return;
-        }
-
-        undo.put(b);
-
-        b.setBlockData(targetData, true);
     }
-
     private void drawPillarBase(PillarPart pillarPart, int x, int z, int startY, int width, Direction dir, boolean tunnel, boolean bridge) {
         if (pillarPart == null || pillarPart.getBaseBlockDatas() == null || pillarPart.getBaseHeight() <= 0) return;
         int baseH = pillarPart.getBaseHeight();
@@ -408,7 +399,7 @@ public class RoadEnabled {
             }
 
             oldZ = oldZ - ((tunnel || bridge) ? jmax - 1 : jmax);
-            oldDir = dir;
+            oldY = y; hasBuilt = true; count++; oldDir = dir;
             return true;
 
         } else if (oldDir == Direction.NORTH && dir == Direction.WEST) {
@@ -441,7 +432,7 @@ public class RoadEnabled {
             }
 
             oldZ = oldZ + ((tunnel || bridge) ? jmax - 1 : jmax);
-            oldDir = dir;
+            oldY = y; hasBuilt = true; count++; oldDir = dir;
             return true;
 
         } else if (oldDir == Direction.SOUTH && dir == Direction.EAST) {
@@ -474,7 +465,7 @@ public class RoadEnabled {
             }
 
             oldZ = oldZ - ((tunnel || bridge) ? jmax - 1 : jmax);
-            oldDir = dir;
+            oldY = y; hasBuilt = true; count++; oldDir = dir;
             return true;
 
         } else if (oldDir == Direction.SOUTH && dir == Direction.WEST) {
@@ -507,7 +498,7 @@ public class RoadEnabled {
             }
 
             oldZ = oldZ + ((tunnel || bridge) ? jmax - 1 : jmax);
-            oldDir = dir;
+            oldY = y; hasBuilt = true; count++; oldDir = dir;
             return true;
 
         } else if (oldDir == Direction.EAST && dir == Direction.NORTH) {
@@ -540,7 +531,7 @@ public class RoadEnabled {
             }
 
             oldX = oldX - ((tunnel || bridge) ? jmax - 1 : jmax);
-            oldDir = dir;
+            oldY = y; hasBuilt = true; count++; oldDir = dir;
             return true;
 
         } else if (oldDir == Direction.EAST && dir == Direction.SOUTH) {
@@ -573,7 +564,7 @@ public class RoadEnabled {
             }
 
             oldX = oldX + ((tunnel || bridge) ? jmax - 1 : jmax);
-            oldDir = dir;
+            oldY = y; hasBuilt = true; count++; oldDir = dir;
             return true;
 
         } else if (oldDir == Direction.WEST && dir == Direction.NORTH) {
@@ -606,7 +597,7 @@ public class RoadEnabled {
             }
 
             oldX = oldX - ((tunnel || bridge) ? jmax - 1 : jmax);
-            oldDir = dir;
+            oldY = y; hasBuilt = true; count++; oldDir = dir;
             return true;
 
         } else if (oldDir == Direction.WEST && dir == Direction.SOUTH) {
@@ -639,7 +630,7 @@ public class RoadEnabled {
             }
 
             oldX = oldX + ((tunnel || bridge) ? jmax - 1 : jmax);
-            oldDir = dir;
+            oldY = y; hasBuilt = true; count++; oldDir = dir;
             return true;
 
         }

@@ -4,7 +4,7 @@
 
     <groupId>com.creadri</groupId>
     <artifactId>LazyRoad</artifactId>
-    <version>0.9.0-modern</version>
+    <version>0.9.1-modern</version>
     <packaging>jar</packaging>
 
     <name>LazyRoad</name>

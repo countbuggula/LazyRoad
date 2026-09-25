@@ -55,6 +55,11 @@ public class Pillar {
     public PillarPart getRoadPartToBuild(int count) {
         if (parts.isEmpty()) return null;
         if (maxSequence == 0) return parts.get(0);
-        return parts.get(count % maxSequence);
+        
+        int index = count % maxSequence;
+        if (index < parts.size()) {
+            return parts.get(index);
+        }
+        return null;
     }
 }
