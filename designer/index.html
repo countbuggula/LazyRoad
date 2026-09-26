@@ -93,8 +93,7 @@
             <h3 style="margin-top:0;">Import / Export</h3>
             <div style="display: flex; gap: 5px; margin-bottom: 5px;">
                 <input type="file" id="fileInput" accept=".json" style="display:none;" onchange="handleFileUpload(event)">
-                <button onclick="document.getElementById('ioModal').style.display='none'; triggerLoad('road');" style="flex:1; background:#8be9fd; color:#282a36;">Load Road</button>
-                <button onclick="document.getElementById('ioModal').style.display='none'; triggerLoad('pillar');" style="flex:1; background:#8be9fd; color:#282a36;">Load Pillar</button>
+                <button onclick="document.getElementById('ioModal').style.display='none'; triggerLoad('auto');" style="flex:1; background:#8be9fd; color:#282a36; font-weight: bold;">Load Template</button>
             </div>
             <div style="display: flex; gap: 5px; margin-top: 5px;">
                 <button class="save" id="exportBtn" style="flex:1;">Generate JSON</button>
@@ -684,6 +683,7 @@
         } // Pillars must strictly preserve raw array sequential layout for Legacy Index Modulo compatibility!
 
         let jsonOutput = {
+            type: template.type,
             maxGradient: parseInt(document.getElementById('globalMaxGradient').value) || 2,
             maxSequence: calculatedMaxSequence,
             stairMinBlocks: parseInt(document.getElementById('globalStairMinBlocks').value) || 0,
@@ -770,12 +770,22 @@
     function handleManualLoad() {
         const text = document.getElementById('jsonOutput').value;
         if (!text.trim()) return alert("Please paste JSON into the textbox first!");
-        parseAndLoadJson(text, document.getElementById('templateType').value);
+        parseAndLoadJson(text, 'auto');
     }
     
     function parseAndLoadJson(jsonString, targetType) {
         try {
             const data = JSON.parse(jsonString);
+            
+            if (targetType === 'auto') {
+                if (data.type) {
+                    targetType = data.type;
+                } else if (data.parts && data.parts.length > 0 && typeof data.parts[0].groundLayer !== 'undefined') {
+                    targetType = 'road';
+                } else {
+                    targetType = 'pillar';
+                }
+            }
             
             // Set global variables
             document.getElementById('templateType').value = targetType;
@@ -835,4 +845,8 @@
 </script>
 </body>
 </html>
+
+
+
+
 
