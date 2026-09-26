@@ -225,7 +225,7 @@ public class RoadEnabled {
     }
 
     private void putBlock(int x, int y, int z, String stringData, Direction dir) {
-        if (stringData == null || (!this.tunnel && stringData.equals("minecraft:air"))) {
+        if (stringData == null) {
             return;
         }
 
@@ -1355,6 +1355,7 @@ public class RoadEnabled {
         return world;
     }
 }
+
 
 
 
