@@ -237,11 +237,11 @@ public class RoadEnabled {
                 org.bukkit.block.BlockFace newFace = dirData.getFacing();
                 int rotations = 0;
                 switch(dir) {
-                    case EAST: rotations = 0; break;
-                    case SOUTH: rotations = 1; break;
-                    case WEST: rotations = 2; break;
-                    case NORTH: rotations = 3; break;
-                }
+                      case WEST: rotations = 0; break;
+                      case NORTH: rotations = 1; break;
+                      case EAST: rotations = 2; break;
+                      case SOUTH: rotations = 3; break;
+                  }
                 for (int i=0; i<rotations; i++) {
                     switch(newFace) {
                         case NORTH: newFace = org.bukkit.block.BlockFace.EAST; break;
@@ -716,7 +716,7 @@ public class RoadEnabled {
                     if (y - oldY > 0) {
                         putBlock(newX, newY, newZ, blockData, Direction.NORTH);
                     } else {
-                        putBlock(newX, newY, newZ, blockData, Direction.NORTH);
+                        putBlock(newX, newY, newZ, blockData, Direction.SOUTH);
                     }
 
                     newZ--;
@@ -877,7 +877,7 @@ public class RoadEnabled {
                     if (y - oldY > 0) {
                         putBlock(newX, newY, newZ, blockData, Direction.SOUTH);
                     } else {
-                        putBlock(newX, newY, newZ, blockData, Direction.SOUTH);
+                        putBlock(newX, newY, newZ, blockData, Direction.NORTH);
                     }
 
                     newZ++;
@@ -1039,7 +1039,7 @@ public class RoadEnabled {
                     if (y - oldY > 0) {
                         putBlock(newX, newY, newZ, blockData, Direction.WEST);
                     } else {
-                        putBlock(newX, newY, newZ, blockData, Direction.WEST);
+                        putBlock(newX, newY, newZ, blockData, Direction.EAST);
                     }
 
                     newX--;
@@ -1199,7 +1199,7 @@ public class RoadEnabled {
                     if (y - oldY > 0) {
                         putBlock(newX, newY, newZ, blockData, Direction.EAST);
                     } else {
-                        putBlock(newX, newY, newZ, blockData, Direction.EAST);
+                        putBlock(newX, newY, newZ, blockData, Direction.WEST);
                     }
 
                     newX++;
@@ -1355,6 +1355,7 @@ public class RoadEnabled {
         return world;
     }
 }
+
 
 
 
