@@ -727,13 +727,7 @@
         }
         
         let outStr = JSON.stringify(jsonOutput, null, 2);
-        outStr = outStr.replace(/"minecraft:([a-z_]*stairs)\[(.*?)\]"/g, (match, p1, p2) => {
-            if (p2.includes('half=top')) {
-                if (p2.includes('facing=east')) p2 = p2.replace('facing=east', 'facing=north');
-                else if (p2.includes('facing=west')) p2 = p2.replace('facing=west', 'facing=south');
-            }
-            return '"minecraft:' + p1 + '[' + p2 + ']"';
-        });
+
         outStr = outStr.replace(/minecraft:([a-z_]*rail)\[facing=(north|south)\]/g, "minecraft:$1[shape=north_south]");
         outStr = outStr.replace(/minecraft:([a-z_]*rail)\[facing=(east|west)\]/g, "minecraft:$1[shape=east_west]");
         outStr = outStr.replace(/minecraft:redstone_wire\[facing=[a-z]+\]/g, "minecraft:redstone_wire");
