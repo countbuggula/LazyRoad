@@ -259,6 +259,14 @@ public class RoadEnabled {
             }
             if (b.getBlockData().matches(targetData)) return;
             undo.put(b);
+            if (!bridge && !b.getType().isAir() && (targetData.getMaterial().isAir() || targetData.getMaterial().isTransparent())) {
+                try {
+                    org.bukkit.event.block.BlockDamageEvent event = new org.bukkit.event.block.BlockDamageEvent(
+                        player, b, player.getInventory().getItemInMainHand(), true
+                    );
+                    org.bukkit.Bukkit.getPluginManager().callEvent(event);
+                } catch (Exception ignored) {}
+            }
             b.setBlockData(targetData, true);
         } catch (IllegalArgumentException ex) {
             // Silently ignore invalid block data strings like "minecraft:lantern_slab" produced by custom templates
@@ -1355,6 +1363,7 @@ public class RoadEnabled {
         return world;
     }
 }
+
 
 
 
