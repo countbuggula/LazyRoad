@@ -216,7 +216,7 @@ public class RoadEnabled {
         }
 
         // saving current data to old ones
-        oldY = y; hasBuilt = true; count++; oldDir = dir;
+        oldDir = dir;
         oldX = x;
         oldZ = z;
         oldY = y;
@@ -289,7 +289,7 @@ public class RoadEnabled {
             }
             if (b.getBlockData().matches(targetData)) return;
             undo.put(b);
-            b.setBlockData(targetData, false);
+            b.setBlockData(targetData, true);
         } catch (IllegalArgumentException ex) {
             // Silently ignore invalid block data strings like "minecraft:lantern_slab" produced by custom templates
         }
@@ -1385,4 +1385,7 @@ public class RoadEnabled {
         return world;
     }
 }
+
+
+
 
