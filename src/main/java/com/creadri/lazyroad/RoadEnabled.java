@@ -714,9 +714,9 @@ public class RoadEnabled {
                     // the block to place
                     String blockData = blockDatas[i][j];
                     if (y - oldY > 0) {
-                        putBlock(newX, newY, newZ, blockData, Direction.NORTH);
-                    } else {
                         putBlock(newX, newY, newZ, blockData, Direction.SOUTH);
+                    } else {
+                        putBlock(newX, newY, newZ, blockData, Direction.NORTH);
                     }
 
                     newZ--;
@@ -875,9 +875,9 @@ public class RoadEnabled {
                     String blockData = blockDatas[i][j];
 
                     if (y - oldY > 0) {
-                        putBlock(newX, newY, newZ, blockData, Direction.SOUTH);
-                    } else {
                         putBlock(newX, newY, newZ, blockData, Direction.NORTH);
+                    } else {
+                        putBlock(newX, newY, newZ, blockData, Direction.SOUTH);
                     }
 
                     newZ++;
@@ -1037,9 +1037,9 @@ public class RoadEnabled {
                     String blockData = blockDatas[i][j];
 
                     if (y - oldY > 0) {
-                        putBlock(newX, newY, newZ, blockData, Direction.WEST);
-                    } else {
                         putBlock(newX, newY, newZ, blockData, Direction.EAST);
+                    } else {
+                        putBlock(newX, newY, newZ, blockData, Direction.WEST);
                     }
 
                     newX--;
@@ -1197,9 +1197,9 @@ public class RoadEnabled {
                     String blockData = blockDatas[i][j];
 
                     if (y - oldY > 0) {
-                        putBlock(newX, newY, newZ, blockData, Direction.EAST);
-                    } else {
                         putBlock(newX, newY, newZ, blockData, Direction.WEST);
+                    } else {
+                        putBlock(newX, newY, newZ, blockData, Direction.EAST);
                     }
 
                     newX++;
@@ -1355,6 +1355,7 @@ public class RoadEnabled {
         return world;
     }
 }
+
 
 
 
