@@ -121,6 +121,9 @@
         <div class="form-row" style="margin-right:15px;">
             <label id="groundLayerLabel" title="For Pillars: The number of vertical blocks carved out from the bottom to form the non-repeating foundation base. For Roads: The Y-index of the block the player visually walks on.">Ground Index:</label> <input type="number" id="partGroundLayer" value="0" min="0" onchange="savePartProperties()">
         </div>
+        <div class="form-row" style="margin-right:15px;" id="playerOffsetDiv">
+            <label id="playerOffsetLabel" title="Horizontal grid column (0-indexed from left) where the player stands and builds from. Default is width / 2. Useful for even widths or asymmetrical roads.">Player Pos:</label> <input type="number" id="partPlayerOffset" value="" min="0" style="width:45px;" placeholder="Auto" onchange="savePartProperties()">
+        </div>
         <div class="form-row" style="margin-right:15px;" id="buildUntilDiv">
             <label id="buildUntilLabel" style="color: #ff79c6;" title="Limits how many blocks down this specific pillar part will generate before halting. Perfect for shaping sweeping arches! Select 0 to build down continuously until hitting solid ground (does not go infinitely).">Build Max Lim:</label> <input type="number" id="partBuildUntil" value="0" min="0" style="width:40px;" onchange="savePartProperties()">
         </div>
@@ -265,6 +268,7 @@
             width: baseW,
             height: baseH,
             groundLayer: baseGround,
+            playerOffset: activePart && activePart.playerOffset !== undefined ? activePart.playerOffset : null,
             repeatEvery: nextRepeat,
             grid: baseGrid
         };
@@ -341,6 +345,8 @@
         const part = getActivePart();
         if (!part) return;
         part.groundLayer = parseInt(document.getElementById('partGroundLayer').value) || 0;
+        const offsetVal = document.getElementById('partPlayerOffset').value.trim();
+        part.playerOffset = offsetVal !== "" ? parseInt(offsetVal) : null;
         part.repeatEvery = parseInt(document.getElementById('partRepeatEvery').value) || 1;
         part.buildUntil = parseInt(document.getElementById('partBuildUntil').value) || 0;
         
@@ -358,10 +364,12 @@
             document.getElementById('groundLayerLabel').textContent = 'Base Height:';
             document.getElementById('groundLayerLabel').style.color = '#50fa7b';
             document.getElementById('buildUntilDiv').style.display = 'flex';
+            document.getElementById('playerOffsetDiv').style.display = 'none';
         } else {
             document.getElementById('groundLayerLabel').textContent = 'Ground Index:';
             document.getElementById('groundLayerLabel').style.color = '';
             document.getElementById('buildUntilDiv').style.display = 'none';
+            document.getElementById('playerOffsetDiv').style.display = 'flex';
         }
         if (!part) return;
         document.getElementById('partWidth').value = part.width;
@@ -371,6 +379,7 @@
             document.getElementById('partHeight').value = part.height;
         }
         document.getElementById('partGroundLayer').value = part.groundLayer;
+        document.getElementById('partPlayerOffset').value = (part.playerOffset !== undefined && part.playerOffset !== null) ? part.playerOffset : '';
         document.getElementById('partBuildUntil').value = part.buildUntil || 0;
         
         const rpeInput = document.getElementById('partRepeatEvery');
@@ -521,7 +530,7 @@
             // Player stands at centerX, feet at groundLayer.
             const pW = CELL_SIZE;
             const pH = CELL_SIZE * 2;
-            const cx = Math.floor(part.width / 2);
+            const cx = (part.playerOffset !== undefined && part.playerOffset !== null) ? part.playerOffset : Math.floor(part.width / 2);
             // groundLayer is the Y level ON WHICH player walks.
             // If groundLayer = 0, feet are directly above the block y=0.
             // Wait, in minecraft player stands ON the ground. Is groundlayer the block below feet?
@@ -705,25 +714,33 @@
                     }
                     return obj;
                 } else {
-                    return {
+                    let partObj = {
                         height: parseInt(p.height),
                         width: parseInt(p.width),
                         groundLayer: parseInt(p.groundLayer),
                         repeatEvery: parseInt(p.repeatEvery),
                         blockDatas: p.grid
                     };
+                    if (p.playerOffset !== undefined && p.playerOffset !== null) {
+                        partObj.playerOffset = parseInt(p.playerOffset);
+                    }
+                    return partObj;
                 }
             })
         };
         
         if (template.stairs && template.stairs.grid) {
-            jsonOutput.stairs = {
+            let stairsObj = {
                 height: parseInt(template.stairs.height),
                 width: parseInt(template.stairs.width),
                 groundLayer: parseInt(template.stairs.groundLayer),
                 repeatEvery: 0,
                 blockDatas: template.stairs.grid
             };
+            if (template.stairs.playerOffset !== undefined && template.stairs.playerOffset !== null) {
+                stairsObj.playerOffset = parseInt(template.stairs.playerOffset);
+            }
+            jsonOutput.stairs = stairsObj;
         }
         
         let outStr = JSON.stringify(jsonOutput, null, 2);
@@ -813,6 +830,7 @@
                             width: p.width,
                             height: p.height,
                             groundLayer: p.groundLayer || 0,
+                            playerOffset: p.playerOffset !== undefined ? p.playerOffset : null,
                             repeatEvery: p.repeatEvery || 1,
                             buildUntil: p.buildUntil || 0,
                             grid: p.blockDatas 
@@ -826,6 +844,7 @@
                     width: data.stairs.width,
                     height: data.stairs.height,
                     groundLayer: data.stairs.groundLayer || 0,
+                    playerOffset: data.stairs.playerOffset !== undefined ? data.stairs.playerOffset : null,
                     repeatEvery: 0,
                     grid: data.stairs.blockDatas
                 };

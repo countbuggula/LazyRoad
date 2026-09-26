@@ -7,6 +7,7 @@ public class RoadPart implements Comparable<RoadPart> {
 
     private int groundLayer;
     private int repeatEvery;
+    private Integer playerOffset;
 
     public RoadPart() {}
 
@@ -30,6 +31,17 @@ public class RoadPart implements Comparable<RoadPart> {
 
     public void setBlockDatas(String[][] blockDatas) {
         this.blockDatas = blockDatas;
+    }
+
+    public int getPlayerOffset() {
+        if (playerOffset != null) {
+            return playerOffset;
+        }
+        return width / 2;
+    }
+
+    public void setPlayerOffset(Integer playerOffset) {
+        this.playerOffset = playerOffset;
     }
 
     public int getGroundLayer() {
