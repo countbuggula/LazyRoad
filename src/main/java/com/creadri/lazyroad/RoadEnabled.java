@@ -267,10 +267,10 @@ public class RoadEnabled {
                 org.bukkit.block.BlockFace newFace = dirData.getFacing();
                 int rotations = 0;
                 switch(dir) {
-                    case SOUTH: rotations = 0; break;
-                    case WEST: rotations = 1; break;
-                    case NORTH: rotations = 2; break;
-                    case EAST: rotations = 3; break;
+                    case WEST: rotations = 0; break;
+                    case NORTH: rotations = 1; break;
+                    case EAST: rotations = 2; break;
+                    case SOUTH: rotations = 3; break;
                 }
                 for (int i=0; i<rotations; i++) {
                     switch(newFace) {
@@ -746,7 +746,7 @@ public class RoadEnabled {
                     if (y - oldY > 0) {
                         putBlock(newX, newY, newZ, blockData, Direction.NORTH);
                     } else {
-                        putBlock(newX, newY, newZ, blockData, Direction.SOUTH);
+                        putBlock(newX, newY, newZ, blockData, Direction.NORTH);
                     }
 
                     newZ--;
@@ -907,7 +907,7 @@ public class RoadEnabled {
                     if (y - oldY > 0) {
                         putBlock(newX, newY, newZ, blockData, Direction.SOUTH);
                     } else {
-                        putBlock(newX, newY, newZ, blockData, Direction.NORTH);
+                        putBlock(newX, newY, newZ, blockData, Direction.SOUTH);
                     }
 
                     newZ++;
@@ -1069,7 +1069,7 @@ public class RoadEnabled {
                     if (y - oldY > 0) {
                         putBlock(newX, newY, newZ, blockData, Direction.WEST);
                     } else {
-                        putBlock(newX, newY, newZ, blockData, Direction.EAST);
+                        putBlock(newX, newY, newZ, blockData, Direction.WEST);
                     }
 
                     newX--;
@@ -1229,7 +1229,7 @@ public class RoadEnabled {
                     if (y - oldY > 0) {
                         putBlock(newX, newY, newZ, blockData, Direction.EAST);
                     } else {
-                        putBlock(newX, newY, newZ, blockData, Direction.WEST);
+                        putBlock(newX, newY, newZ, blockData, Direction.EAST);
                     }
 
                     newX++;
