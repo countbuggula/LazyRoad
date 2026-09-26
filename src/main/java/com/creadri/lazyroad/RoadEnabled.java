@@ -22,7 +22,7 @@ public class RoadEnabled {
     private boolean hasBuilt = false;
     private boolean tunnel = false;
     private boolean bridge = false;
-    private boolean straight = true;
+    private boolean straight = false;
     private boolean forceUp = false;
     private boolean forceDown = false;
     private int oldX;
@@ -142,76 +142,52 @@ public class RoadEnabled {
 
         switch (dir) {
             case EAST:
-                // checking if going backward or heading to opposite direction
                 if ((hasBuilt && (oldZ - z) <= 0) || oldDir == Direction.WEST) {
                     return;
                 }
-                // constraint if it's going straight
                 if (straight) {
                     x = oldX;
                 }
-
                 if (drawCorner(x, y, z, dir)) {
                     return;
                 }
-
-                // draw this stupid road
                 drawEast(x, y, z, tunnel);
-
                 break;
             case NORTH:
-                // checking if going backward or heading to opposite direction
                 if ((hasBuilt && (oldX - x) <= 0) || oldDir == Direction.SOUTH) {
                     return;
                 }
-                // constraint if it's going straight
                 if (straight) {
                     z = oldZ;
                 }
-
                 if (drawCorner(x, y, z, dir)) {
                     return;
                 }
-
-                // draw this stupid road
                 drawNorth(x, y, z, tunnel);
-
                 break;
             case SOUTH:
-                // checking if going backward or heading to opposite direction
                 if ((hasBuilt && (x - oldX) <= 0) || oldDir == Direction.NORTH) {
                     return;
                 }
-                // constraint if it's going straight
                 if (straight) {
                     z = oldZ;
                 }
-
                 if (drawCorner(x, y, z, dir)) {
                     return;
                 }
-
-                // draw this stupid road
                 drawSouth(x, y, z, tunnel);
-
                 break;
             case WEST:
-                // checking if going backward or heading to opposite direction
                 if ((hasBuilt && (z - oldZ) <= 0) || oldDir == Direction.EAST) {
                     return;
                 }
-                // constraint if it's going straight
                 if (straight) {
                     x = oldX;
                 }
-
                 if (drawCorner(x, y, z, dir)) {
                     return;
                 }
-
-                // draw this stupid road
                 drawWest(x, y, z, tunnel);
-
                 break;
         }
 
@@ -232,23 +208,17 @@ public class RoadEnabled {
     }
 
     private Direction getDirection(Location loc) {
-        // get the direction of the player N, S, W, E
         float rot = loc.getYaw() % 360;
         if (rot < 0) {
             rot += 360;
         }
-
         if ((rot >= 0 && rot < 45) || (rot >= 315 && rot <= 360)) {
-            // WEST
             return Direction.WEST;
         } else if (rot >= 45 && rot < 135) {
-            // NORTH
             return Direction.NORTH;
         } else if (rot >= 135 && rot < 225) {
-            // EAST
             return Direction.EAST;
         } else if (rot >= 225 && rot < 315) {
-            // SOUTH
             return Direction.SOUTH;
         }
         return null;
@@ -267,10 +237,10 @@ public class RoadEnabled {
                 org.bukkit.block.BlockFace newFace = dirData.getFacing();
                 int rotations = 0;
                 switch(dir) {
-                    case WEST: rotations = 0; break;
-                    case NORTH: rotations = 1; break;
-                    case EAST: rotations = 2; break;
-                    case SOUTH: rotations = 3; break;
+                    case EAST: rotations = 0; break;
+                    case SOUTH: rotations = 1; break;
+                    case WEST: rotations = 2; break;
+                    case NORTH: rotations = 3; break;
                 }
                 for (int i=0; i<rotations; i++) {
                     switch(newFace) {
@@ -1385,6 +1355,7 @@ public class RoadEnabled {
         return world;
     }
 }
+
 
 
 
