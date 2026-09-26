@@ -225,20 +225,11 @@ public class RoadEnabled {
     }
 
     private void putBlock(int x, int y, int z, String stringData, Direction dir) {
-        putBlock(x, y, z, stringData, dir, false);
-    }
-
-    private void putBlock(int x, int y, int z, String stringData, Direction dir, boolean isBelowGround) {
         if (stringData == null) {
             return;
         }
 
         Block b = world.getBlockAt(x, y, z);
-        if (isBelowGround && !this.tunnel && (stringData.equals("minecraft:air") || stringData.equals("air"))) {
-            if (!b.getType().isAir()) {
-                return; // Preserve existing terrain/ground underneath the road surface
-            }
-        }
         try {
             BlockData targetData = Bukkit.getServer().createBlockData(stringData);
             if (targetData instanceof org.bukkit.block.data.Directional) {
@@ -697,7 +688,7 @@ public class RoadEnabled {
                 // the block to place
                 String blockData = blockDatas[i][j];
 
-                putBlock(newX, newY, newZ, blockData, Direction.NORTH, i <= groundLayer);
+                putBlock(newX, newY, newZ, blockData, Direction.NORTH);
 
                 newZ--;
             }
@@ -733,7 +724,7 @@ public class RoadEnabled {
                     // the block to place
                     String blockData = blockDatas[i][j];
                     if (y - oldY > 0) {
-                        putBlock(newX, newY, newZ, blockData, Direction.SOUTH, i <= groundLayer);
+                        putBlock(newX, newY, newZ, blockData, Direction.SOUTH);
                     } else {
                         putBlock(newX, newY, newZ, blockData, Direction.NORTH);
                     }
@@ -859,7 +850,7 @@ public class RoadEnabled {
                 // the block to place
                 String blockData = blockDatas[i][j];
 
-                putBlock(newX, newY, newZ, blockData, Direction.SOUTH, i <= groundLayer);
+                putBlock(newX, newY, newZ, blockData, Direction.SOUTH);
 
                 newZ++;
             }
@@ -1023,7 +1014,7 @@ public class RoadEnabled {
                 // the block to place
                 String blockData = blockDatas[i][j];
 
-                putBlock(newX, newY, newZ, blockData, Direction.WEST, i <= groundLayer);
+                putBlock(newX, newY, newZ, blockData, Direction.WEST);
 
                 newX--;
             }
@@ -1060,7 +1051,7 @@ public class RoadEnabled {
                     String blockData = blockDatas[i][j];
 
                     if (y - oldY > 0) {
-                        putBlock(newX, newY, newZ, blockData, Direction.EAST, i <= groundLayer);
+                        putBlock(newX, newY, newZ, blockData, Direction.EAST);
                     } else {
                         putBlock(newX, newY, newZ, blockData, Direction.WEST);
                     }
@@ -1185,7 +1176,7 @@ public class RoadEnabled {
                 // the block to place
                 String blockData = blockDatas[i][j];
 
-                putBlock(newX, newY, newZ, blockData, Direction.EAST, i <= groundLayer);
+                putBlock(newX, newY, newZ, blockData, Direction.EAST);
 
                 newX++;
             }
