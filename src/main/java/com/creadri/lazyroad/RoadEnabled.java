@@ -272,52 +272,107 @@ public class RoadEnabled {
             // Silently ignore invalid block data strings like "minecraft:lantern_slab" produced by custom templates
         }
     }
-    private void drawPillarBase(PillarPart pillarPart, int x, int z, int startY, int width, Direction dir, boolean tunnel, boolean bridge) {
-        if (pillarPart == null || pillarPart.getBaseBlockDatas() == null || pillarPart.getBaseHeight() <= 0) return;
-        int baseH = pillarPart.getBaseHeight();
+    private void drawPillar(PillarPart pillarPart, int x, int z, int topY, Direction dir, boolean tunnel, boolean bridge) {
+        if (pillarPart == null) return;
+        int width = pillarPart.getWidth();
+        int coreHeight = pillarPart.getHeight();
+        int baseHeight = pillarPart.getBaseHeight();
+        String[][] coreBlocks = pillarPart.getBlockDatas();
         String[][] baseBlocks = pillarPart.getBaseBlockDatas();
-        int newX = x;
-        int newZ = z;
-        if (dir == Direction.NORTH || dir == Direction.SOUTH) {
-            newX = (tunnel || bridge) ? (dir == Direction.NORTH ? x - 1 : x + 1) : x;
-        } else {
-            newZ = (tunnel || bridge) ? (dir == Direction.WEST ? z + 1 : z - 1) : z;
+        int buildUntil = pillarPart.getBuildUntil();
+        if (buildUntil == 0) {
+            buildUntil = Integer.MAX_VALUE;
         }
-        
-        for (int mh = 0; mh < baseH; mh++) {
-            // baseBlocks[0] is visually top of base. baseBlocks[baseH-1] is bottom (touching ground).
-            // startY is the block directly ON TOP of the terrain.
-            // If base sits on terrain, finalY goes UP based on mh.
-            int finalY = startY + (baseH - 1 - mh); 
-            
-            if (dir == Direction.NORTH) {
-                newZ = z + (width / 2);
-            } else if (dir == Direction.SOUTH) {
-                newZ = z - (width / 2);
-            } else if (dir == Direction.WEST) {
-                newX = x + (width / 2);
-            } else if (dir == Direction.EAST) {
-                newX = x - (width / 2);
-            }
-            
+
+        int pillarX = x;
+        int pillarZ = z;
+        if (dir == Direction.NORTH || dir == Direction.SOUTH) {
+            pillarX = (tunnel || bridge) ? (dir == Direction.NORTH ? x - 1 : x + 1) : x;
+        } else {
+            pillarZ = (tunnel || bridge) ? (dir == Direction.WEST ? z + 1 : z - 1) : z;
+        }
+
+        // Probe downward from topY to locate ground
+        int groundY = -1;
+        for (int probeY = topY; probeY > 0; probeY--) {
+            boolean hitSolid = false;
             for (int j = 0; j < width; j++) {
-                String blockData = baseBlocks[mh][j];
-                if (blockData != null && !blockData.equals("minecraft:air")) {
-                    Block b2 = world.getBlockAt(newX, finalY, newZ);
-                    if (isToIgnoreForPillar(b2)) {
-                        undo.put(b2);
-                        try {
-                            if (!blockData.contains(":")) {
-                                blockData = "minecraft:" + blockData;
-                            }
-                            b2.setBlockData(Bukkit.getServer().createBlockData(blockData), true);
-                        } catch (Exception e) {}
-                    }
+                int px = pillarX;
+                int pz = pillarZ;
+                if (dir == Direction.NORTH) pz = z + (width / 2) - j;
+                else if (dir == Direction.SOUTH) pz = z - (width / 2) + j;
+                else if (dir == Direction.WEST) px = x + (width / 2) - j;
+                else if (dir == Direction.EAST) px = x - (width / 2) + j;
+
+                if (!isToIgnoreForPillar(world.getBlockAt(px, probeY, pz))) {
+                    hitSolid = true;
+                    break;
                 }
-                if (dir == Direction.NORTH) newZ--;
-                else if (dir == Direction.SOUTH) newZ++;
-                else if (dir == Direction.WEST) newX--;
-                else if (dir == Direction.EAST) newX++;
+            }
+            if (hitSolid) {
+                groundY = probeY;
+                break;
+            }
+        }
+
+        int availableGap = groundY >= 0 ? (topY - groundY) : (topY);
+        int totalLimit = Math.min(availableGap, buildUntil);
+
+        if (baseHeight > 0 && baseBlocks != null) {
+            if (totalLimit <= baseHeight) {
+                // Gap is smaller than or equal to base: build from bottom up towards road
+                for (int curY = groundY + 1; curY <= topY; curY++) {
+                    int baseLayer = curY - (groundY + 1); // 0 = lowest block touching ground
+                    if (baseLayer >= baseHeight) break;
+                    int row = baseHeight - 1 - baseLayer; // baseBlocks row
+                    drawPillarLayer(baseBlocks[row], width, pillarX, curY, pillarZ, z, x, dir);
+                }
+                return;
+            }
+
+            // Normal gap: base fits at the bottom
+            int baseBottomY = groundY + 1;
+            for (int mh = 0; mh < baseHeight; mh++) {
+                int curY = baseBottomY + (baseHeight - 1 - mh);
+                drawPillarLayer(baseBlocks[mh], width, pillarX, curY, pillarZ, z, x, dir);
+            }
+
+            // Pillar repeating core fills from topY down to the top of the base
+            int coreLimitY = baseBottomY + baseHeight;
+            int coreLayer = 0;
+            for (int curY = topY; curY >= coreLimitY; curY--) {
+                int row = coreLayer >= coreHeight ? (coreHeight - 1) : coreLayer;
+                drawPillarLayer(coreBlocks[row], width, pillarX, curY, pillarZ, z, x, dir);
+                coreLayer++;
+            }
+        } else {
+            // No base defined: repeating core builds down from topY until ground or buildUntil
+            int coreLayer = 0;
+            for (int curY = topY; curY > 0 && curY > (topY - totalLimit); curY--) {
+                int row = coreLayer >= coreHeight ? (coreHeight - 1) : coreLayer;
+                drawPillarLayer(coreBlocks[row], width, pillarX, curY, pillarZ, z, x, dir);
+                coreLayer++;
+            }
+        }
+    }
+
+    private void drawPillarLayer(String[] rowData, int width, int pillarX, int curY, int pillarZ, int z, int x, Direction dir) {
+        if (rowData == null || curY <= 0) return;
+        for (int j = 0; j < width; j++) {
+            String blockData = rowData[j];
+            if (blockData != null && !blockData.equals("minecraft:air")) {
+                int px = pillarX;
+                int pz = pillarZ;
+                if (dir == Direction.NORTH) pz = z + (width / 2) - j;
+                else if (dir == Direction.SOUTH) pz = z - (width / 2) + j;
+                else if (dir == Direction.WEST) px = x + (width / 2) - j;
+                else if (dir == Direction.EAST) px = x - (width / 2) + j;
+
+                Block block = world.getBlockAt(px, curY, pz);
+                if (isToIgnoreForPillar(block)) {
+                    undo.put(block);
+                    putBlock(px, curY, pz, blockData, dir);
+                }
             }
         }
     }
@@ -742,70 +797,10 @@ public class RoadEnabled {
          * DRAWING PILLARS
          */
         if (pillar != null) {
-
             PillarPart pillarPart = pillar.getRoadPartToBuild(count);
-
-            if (pillarPart == null) {
-                System.out.println("pillar is null");
-                return;
+            if (pillarPart != null) {
+                drawPillar(pillarPart, x, z, y - groundLayer - 1, Direction.NORTH, tunnel, bridge);
             }
-
-            newX = (tunnel || bridge) ? x - 1 : x;
-            newY = y - groundLayer - 1;
-            newZ = z;
-
-            int buildUntil = pillarPart.getBuildUntil();
-            if (buildUntil == 0) {
-                buildUntil = Integer.MAX_VALUE;
-            }
-
-            height = pillarPart.getHeight();
-            width = pillarPart.getWidth();
-
-            blockDatas = pillarPart.getBlockDatas();
-            
-
-
-            // build the pillar
-            int i = 0;
-            boolean buildBlock = false;
-            do {
-                // go to the left
-                newZ = z + (width / 2);
-                int h = i >= height ? height - 1 : i;
-                buildBlock = false;
-
-                for (int j = 0; j < width; j++) {
-                    // getting the block information
-                    String blockData = blockDatas[h][j];
-                    
-
-                    if (blockData != null) {
-                        Block block = world.getBlockAt(newX, newY, newZ);
-                        if (isToIgnoreForPillar(block)) {
-                            if (!blockData.equals("minecraft:air") || !block.getType().isAir()) {
-                                undo.put(block);
-                                try {
-                                    if (!blockData.contains(":")) {
-                                        blockData = "minecraft:" + blockData;
-                                    }
-                                    block.setBlockData(Bukkit.getServer().createBlockData(blockData), true);
-                                } catch (Exception ex) {
-                                    System.out.println("[LazyRoad] Invalid BlockData for Pillar Core: " + blockData);
-                                }
-                                buildBlock = true;
-                            }
-                        }
-                    }
-
-                    //to right
-                    newZ--;
-                }
-                buildUntil--;
-                newY--;
-                i++;
-            } while ((buildBlock || i < height) && buildUntil > 0 && newY > 0);
-            drawPillarBase(pillarPart, x, z, newY + 1, width, Direction.NORTH, tunnel, bridge);
         }
     }
 
@@ -905,71 +900,10 @@ public class RoadEnabled {
          * DRAWING PILLARS
          */
         if (pillar != null) {
-
             PillarPart pillarPart = pillar.getRoadPartToBuild(count);
-
-            if (pillarPart == null) {
-                return;
+            if (pillarPart != null) {
+                drawPillar(pillarPart, x, z, y - groundLayer - 1, Direction.SOUTH, tunnel, bridge);
             }
-
-            newX = (tunnel || bridge) ? x + 1 : x;
-            newY = y - groundLayer - 1;
-            newZ = z;
-
-            int buildUntil = pillarPart.getBuildUntil();
-            if (buildUntil == 0) {
-                buildUntil = Integer.MAX_VALUE;
-            }
-
-            height = pillarPart.getHeight();
-            width = pillarPart.getWidth();
-
-            blockDatas = pillarPart.getBlockDatas();
-            
-
-
-            // build the pillar
-            int i = 0;
-            boolean buildBlock = false;
-            do {
-                // go to the left
-                newZ = z - (width / 2);
-
-                int h = i >= height ? height - 1 : i;
-
-                buildBlock = false;
-
-                for (int j = 0; j < width; j++) {
-                    // getting the block information
-                    String blockData = blockDatas[h][j];
-                    
-
-                    if (blockData != null) {
-                        Block block = world.getBlockAt(newX, newY, newZ);
-                        if (isToIgnoreForPillar(block)) {
-                            if (!blockData.equals("minecraft:air") || !block.getType().isAir()) {
-                                undo.put(block);
-                                try {
-                                    if (!blockData.contains(":")) {
-                                        blockData = "minecraft:" + blockData;
-                                    }
-                                    block.setBlockData(Bukkit.getServer().createBlockData(blockData), true);
-                                } catch (Exception ex) {
-                                    System.out.println("[LazyRoad] Invalid BlockData for Pillar Core: " + blockData);
-                                }
-                                buildBlock = true;
-                            }
-                        }
-                    }
-
-                    //to right
-                    newZ++;
-                }
-                buildUntil--;
-                newY--;
-                i++;
-            } while ((buildBlock || i < height) && buildUntil > 0 && newY > 0);
-            drawPillarBase(pillarPart, x, z, newY + 1, width, Direction.SOUTH, tunnel, bridge);
         }
     }
 
@@ -1069,69 +1003,10 @@ public class RoadEnabled {
          * DRAWING PILLARS
          */
         if (pillar != null) {
-
             PillarPart pillarPart = pillar.getRoadPartToBuild(count);
-
-            if (pillarPart == null) {
-                return;
+            if (pillarPart != null) {
+                drawPillar(pillarPart, x, z, y - groundLayer - 1, Direction.WEST, tunnel, bridge);
             }
-
-            newX = x;
-            newY = y - groundLayer - 1;
-            newZ = (tunnel || bridge) ? z + 1 : z;
-
-            int buildUntil = pillarPart.getBuildUntil();
-            if (buildUntil == 0) {
-                buildUntil = Integer.MAX_VALUE;
-            }
-
-            height = pillarPart.getHeight();
-            width = pillarPart.getWidth();
-
-            blockDatas = pillarPart.getBlockDatas();
-            
-
-
-            // build the pillar
-            int i = 0;
-            boolean buildBlock = false;
-            do {
-                // go to the left
-                newX = x + (width / 2);
-                int h = i >= height ? height - 1 : i;
-                buildBlock = false;
-
-                for (int j = 0; j < width; j++) {
-                    // getting the block information
-                    String blockData = blockDatas[h][j];
-                    
-
-                    if (blockData != null) {
-                        Block block = world.getBlockAt(newX, newY, newZ);
-                        if (isToIgnoreForPillar(block)) {
-                            if (!blockData.equals("minecraft:air") || !block.getType().isAir()) {
-                                undo.put(block);
-                                try {
-                                    if (!blockData.contains(":")) {
-                                        blockData = "minecraft:" + blockData;
-                                    }
-                                    block.setBlockData(Bukkit.getServer().createBlockData(blockData), true);
-                                } catch (Exception ex) {
-                                    System.out.println("[LazyRoad] Invalid BlockData for Pillar Core: " + blockData);
-                                }
-                                buildBlock = true;
-                            }
-                        }
-                    }
-
-                    //to right
-                    newX--;
-                }
-                buildUntil--;
-                newY--;
-                i++;
-            } while ((buildBlock || i < height) && buildUntil > 0 && newY > 0);
-            drawPillarBase(pillarPart, x, z, newY + 1, width, Direction.WEST, tunnel, bridge);
         }
     }
 
@@ -1231,69 +1106,10 @@ public class RoadEnabled {
          * DRAWING PILLARS
          */
         if (pillar != null) {
-
             PillarPart pillarPart = pillar.getRoadPartToBuild(count);
-
-            if (pillarPart == null) {
-                return;
+            if (pillarPart != null) {
+                drawPillar(pillarPart, x, z, y - groundLayer - 1, Direction.EAST, tunnel, bridge);
             }
-
-            newX = x;
-            newY = y - groundLayer - 1;
-            newZ = (tunnel || bridge) ? z - 1 : z;
-
-            int buildUntil = pillarPart.getBuildUntil();
-            if (buildUntil == 0) {
-                buildUntil = Integer.MAX_VALUE;
-            }
-
-            height = pillarPart.getHeight();
-            width = pillarPart.getWidth();
-
-            blockDatas = pillarPart.getBlockDatas();
-            
-
-
-            // build the pillar
-            int i = 0;
-            boolean buildBlock = false;
-            do {
-                // go to the left
-                newX = x - (width / 2);
-                int h = i >= height ? height - 1 : i;
-                buildBlock = false;
-
-                for (int j = 0; j < width; j++) {
-                    // getting the block information
-                    String blockData = blockDatas[h][j];
-                    
-
-                    if (blockData != null) {
-                        Block block = world.getBlockAt(newX, newY, newZ);
-                        if (isToIgnoreForPillar(block)) {
-                            if (!blockData.equals("minecraft:air") || !block.getType().isAir()) {
-                                undo.put(block);
-                                try {
-                                    if (!blockData.contains(":")) {
-                                        blockData = "minecraft:" + blockData;
-                                    }
-                                    block.setBlockData(Bukkit.getServer().createBlockData(blockData), true);
-                                } catch (Exception ex) {
-                                    System.out.println("[LazyRoad] Invalid BlockData for Pillar Core: " + blockData);
-                                }
-                                buildBlock = true;
-                            }
-                        }
-                    }
-
-                    //to right
-                    newX++;
-                }
-                buildUntil--;
-                newY--;
-                i++;
-            } while ((buildBlock || i < height) && buildUntil > 0 && newY > 0);
-            drawPillarBase(pillarPart, x, z, newY + 1, width, Direction.EAST, tunnel, bridge);
         }
     }
 
