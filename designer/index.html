@@ -379,7 +379,7 @@
             document.getElementById('groundLayerLabel').textContent = 'Base Height:';
             document.getElementById('groundLayerLabel').style.color = '#50fa7b';
             document.getElementById('buildUntilDiv').style.display = 'flex';
-            document.getElementById('playerOffsetDiv').style.display = 'none';
+            document.getElementById('playerOffsetDiv').style.display = 'flex';
         } else {
             document.getElementById('groundLayerLabel').textContent = 'Ground Index:';
             document.getElementById('groundLayerLabel').style.color = '';
@@ -727,6 +727,9 @@
                         buildUntil: parseInt(p.buildUntil) || 0,
                         blockDatas: p.grid.slice(0, realH)
                     };
+                    if (p.playerOffset !== undefined && p.playerOffset !== null) {
+                        obj.playerOffset = parseInt(p.playerOffset);
+                    }
                     if (p.startHere) {
                         obj.startHere = true;
                     }
@@ -846,6 +849,7 @@
                             width: p.width,
                             height: p.height + p.baseHeight,
                             groundLayer: p.baseHeight,
+                            playerOffset: p.playerOffset !== undefined ? p.playerOffset : null,
                             startHere: !!p.startHere,
                             repeatEvery: p.repeatEvery || 1,
                             buildUntil: p.buildUntil || 0,

@@ -9,6 +9,7 @@ public class PillarPart {
     private int width;
     private int buildUntil;
     private boolean startHere;
+    private Integer playerOffset;
 
         public String[][] getBaseBlockDatas() {
         return baseBlockDatas;
@@ -46,6 +47,17 @@ public class PillarPart {
 
     public void setBlockDatas(String[][] blockDatas) {
         this.blockDatas = blockDatas;
+    }
+
+    public int getPlayerOffset() {
+        if (playerOffset != null) {
+            return playerOffset;
+        }
+        return width / 2;
+    }
+
+    public void setPlayerOffset(Integer playerOffset) {
+        this.playerOffset = playerOffset;
     }
 
     public boolean isStartHere() {

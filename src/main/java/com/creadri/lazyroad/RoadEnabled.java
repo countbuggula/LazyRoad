@@ -292,6 +292,8 @@ public class RoadEnabled {
             pillarZ = (tunnel || bridge) ? (dir == Direction.WEST ? z + 1 : z - 1) : z;
         }
 
+        int offset = pillarPart.getPlayerOffset();
+
         // Probe downward from topY to locate ground
         int groundY = -1;
         for (int probeY = topY; probeY > 0; probeY--) {
@@ -299,10 +301,10 @@ public class RoadEnabled {
             for (int j = 0; j < width; j++) {
                 int px = pillarX;
                 int pz = pillarZ;
-                if (dir == Direction.NORTH) pz = z + (width / 2) - j;
-                else if (dir == Direction.SOUTH) pz = z - (width / 2) + j;
-                else if (dir == Direction.WEST) px = x + (width / 2) - j;
-                else if (dir == Direction.EAST) px = x - (width / 2) + j;
+                if (dir == Direction.NORTH) pz = z + offset - j;
+                else if (dir == Direction.SOUTH) pz = z - offset + j;
+                else if (dir == Direction.WEST) px = x + offset - j;
+                else if (dir == Direction.EAST) px = x - offset + j;
 
                 if (!isToIgnoreForPillar(world.getBlockAt(px, probeY, pz))) {
                     hitSolid = true;
@@ -326,7 +328,7 @@ public class RoadEnabled {
                     int baseLayer = curY - baseBottomY; // 0 = bottom-most layer touching ground
                     if (baseLayer >= baseHeight) break;
                     int row = baseHeight - 1 - baseLayer;
-                    drawPillarLayer(baseBlocks[row], width, pillarX, curY, pillarZ, z, x, dir);
+                    drawPillarLayer(baseBlocks[row], width, offset, pillarX, curY, pillarZ, z, x, dir);
                 }
                 return;
             }
@@ -334,7 +336,7 @@ public class RoadEnabled {
             // Full base fits on the ground
             for (int mh = 0; mh < baseHeight; mh++) {
                 int curY = baseBottomY + (baseHeight - 1 - mh);
-                drawPillarLayer(baseBlocks[mh], width, pillarX, curY, pillarZ, z, x, dir);
+                drawPillarLayer(baseBlocks[mh], width, offset, pillarX, curY, pillarZ, z, x, dir);
             }
 
             // 2. Build the top pillar core downwards from topY
@@ -351,7 +353,7 @@ public class RoadEnabled {
             int coreLayer = 0;
             for (int curY = topY; curY >= coreBottomLimitY; curY--) {
                 int row = coreLayer >= coreHeight ? (coreHeight - 1) : coreLayer;
-                drawPillarLayer(coreBlocks[row], width, pillarX, curY, pillarZ, z, x, dir);
+                drawPillarLayer(coreBlocks[row], width, offset, pillarX, curY, pillarZ, z, x, dir);
                 coreLayer++;
             }
         } else {
@@ -360,23 +362,23 @@ public class RoadEnabled {
             int coreLayer = 0;
             for (int curY = topY; curY > 0 && curY > (topY - totalLimit); curY--) {
                 int row = coreLayer >= coreHeight ? (coreHeight - 1) : coreLayer;
-                drawPillarLayer(coreBlocks[row], width, pillarX, curY, pillarZ, z, x, dir);
+                drawPillarLayer(coreBlocks[row], width, offset, pillarX, curY, pillarZ, z, x, dir);
                 coreLayer++;
             }
         }
     }
 
-    private void drawPillarLayer(String[] rowData, int width, int pillarX, int curY, int pillarZ, int z, int x, Direction dir) {
+    private void drawPillarLayer(String[] rowData, int width, int offset, int pillarX, int curY, int pillarZ, int z, int x, Direction dir) {
         if (rowData == null || curY <= 0) return;
         for (int j = 0; j < width; j++) {
             String blockData = rowData[j];
             if (blockData != null && !blockData.equals("minecraft:air")) {
                 int px = pillarX;
                 int pz = pillarZ;
-                if (dir == Direction.NORTH) pz = z + (width / 2) - j;
-                else if (dir == Direction.SOUTH) pz = z - (width / 2) + j;
-                else if (dir == Direction.WEST) px = x + (width / 2) - j;
-                else if (dir == Direction.EAST) px = x - (width / 2) + j;
+                if (dir == Direction.NORTH) pz = z + offset - j;
+                else if (dir == Direction.SOUTH) pz = z - offset + j;
+                else if (dir == Direction.WEST) px = x + offset - j;
+                else if (dir == Direction.EAST) px = x - offset + j;
 
                 Block block = world.getBlockAt(px, curY, pz);
                 if (isToIgnoreForPillar(block)) {
