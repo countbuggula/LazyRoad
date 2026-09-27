@@ -46,7 +46,17 @@ public class Road {
         return true;
     }
 
+    public int getStartIndex() {
+        for (int i = 0; i < parts.size(); i++) {
+            if (parts.get(i).isStartHere()) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
     public RoadPart getRoadPartToBuild(int count) {
+        count += getStartIndex();
         for (RoadPart part : parts) {
             if (part.isToBuild(count, maxSequence)) {
                 return part;

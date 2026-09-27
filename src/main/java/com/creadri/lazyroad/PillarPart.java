@@ -8,6 +8,7 @@ public class PillarPart {
     private int height;
     private int width;
     private int buildUntil;
+    private boolean startHere;
 
         public String[][] getBaseBlockDatas() {
         return baseBlockDatas;
@@ -45,6 +46,14 @@ public class PillarPart {
 
     public void setBlockDatas(String[][] blockDatas) {
         this.blockDatas = blockDatas;
+    }
+
+    public boolean isStartHere() {
+        return startHere;
+    }
+
+    public void setStartHere(boolean startHere) {
+        this.startHere = startHere;
     }
 
     public int getBuildUntil() {

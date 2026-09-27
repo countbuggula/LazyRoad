@@ -52,11 +52,20 @@ public class Pillar {
         this.parts = parts;
     }
 
+    public int getStartIndex() {
+        for (int i = 0; i < parts.size(); i++) {
+            if (parts.get(i).isStartHere()) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
     public PillarPart getRoadPartToBuild(int count) {
         if (parts.isEmpty()) return null;
         if (maxSequence == 0) return parts.get(0);
         
-        int index = count % maxSequence;
+        int index = (count + getStartIndex()) % maxSequence;
         if (index < parts.size()) {
             return parts.get(index);
         }

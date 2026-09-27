@@ -130,6 +130,11 @@
         <div class="form-row" style="margin-right:15px;">
             <label title="How frequently this segment sequence is injected into the primary matrix array.">Repeat Every:</label> <input type="number" id="partRepeatEvery" value="1" min="1" onchange="savePartProperties()">
         </div>
+        <div class="form-row" style="margin-right:15px;" id="startHereDiv">
+            <label id="startHereLabel" style="color: #f1fa8c; cursor:pointer;" title="Designates this part or pillar as the sequence start point (Frame 0). When checked, all other parts are automatically unchecked.">
+                <input type="checkbox" id="partStartHere" onchange="toggleStartHere(this.checked)" style="cursor:pointer; vertical-align:middle; margin-right:4px;">Start Here
+            </label>
+        </div>
         <button class="danger" id="deletePartBtn">Delete Part</button>
     </div>
 
@@ -341,6 +346,16 @@
         draw();
     }
     
+    function toggleStartHere(checked) {
+        if (isEditingStairs) return;
+        template.parts.forEach(p => p.startHere = false);
+        if (checked) {
+            const part = getActivePart();
+            if (part) part.startHere = true;
+        }
+        renderTabs();
+    }
+
     function savePartProperties() {
         const part = getActivePart();
         if (!part) return;
@@ -387,9 +402,12 @@
             rpeInput.disabled = true;
             rpeInput.value = 0;
             document.getElementById('partToolbar').style.background = '#ffb86c33';
+            document.getElementById('startHereDiv').style.display = 'none';
         } else {
             rpeInput.disabled = false;
             rpeInput.value = part.repeatEvery;
+            document.getElementById('startHereDiv').style.display = 'flex';
+            document.getElementById('partStartHere').checked = !!part.startHere;
             document.getElementById('partToolbar').style.background = 'transparent';
         }
     }
@@ -402,10 +420,11 @@
             const btn = document.createElement('div');
             btn.className = 'tab' + (!isEditingStairs && activePartIndex === i ? ' active' : '');
             
+            let startBadge = p.startHere ? ' ★' : '';
             if (template.type === 'pillar') {
-                btn.textContent = 'Pillar ' + (i + 1);
+                btn.textContent = 'Pillar ' + (i + 1) + startBadge;
             } else {
-                btn.textContent = 'Part ' + (i + 1) + ' (Intv ' + p.repeatEvery + ')';
+                btn.textContent = 'Part ' + (i + 1) + ' (Intv ' + p.repeatEvery + ')' + startBadge;
             }
             
             btn.onclick = () => selectPart(i);
@@ -708,6 +727,9 @@
                         buildUntil: parseInt(p.buildUntil) || 0,
                         blockDatas: p.grid.slice(0, realH)
                     };
+                    if (p.startHere) {
+                        obj.startHere = true;
+                    }
                     if (baseH > 0) {
                         obj.baseHeight = baseH;
                         obj.baseBlockDatas = p.grid.slice(realH, h);
@@ -723,6 +745,9 @@
                     };
                     if (p.playerOffset !== undefined && p.playerOffset !== null) {
                         partObj.playerOffset = parseInt(p.playerOffset);
+                    }
+                    if (p.startHere) {
+                        partObj.startHere = true;
                     }
                     return partObj;
                 }
@@ -821,6 +846,7 @@
                             width: p.width,
                             height: p.height + p.baseHeight,
                             groundLayer: p.baseHeight,
+                            startHere: !!p.startHere,
                             repeatEvery: p.repeatEvery || 1,
                             buildUntil: p.buildUntil || 0,
                             grid: p.blockDatas.concat(p.baseBlockDatas)
@@ -831,6 +857,7 @@
                             height: p.height,
                             groundLayer: p.groundLayer || 0,
                             playerOffset: p.playerOffset !== undefined ? p.playerOffset : null,
+                            startHere: !!p.startHere,
                             repeatEvery: p.repeatEvery || 1,
                             buildUntil: p.buildUntil || 0,
                             grid: p.blockDatas 

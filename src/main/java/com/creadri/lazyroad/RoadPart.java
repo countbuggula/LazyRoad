@@ -8,6 +8,7 @@ public class RoadPart implements Comparable<RoadPart> {
     private int groundLayer;
     private int repeatEvery;
     private Integer playerOffset;
+    private boolean startHere;
 
     public RoadPart() {}
 
@@ -42,6 +43,14 @@ public class RoadPart implements Comparable<RoadPart> {
 
     public void setPlayerOffset(Integer playerOffset) {
         this.playerOffset = playerOffset;
+    }
+
+    public boolean isStartHere() {
+        return startHere;
+    }
+
+    public void setStartHere(boolean startHere) {
+        this.startHere = startHere;
     }
 
     public int getGroundLayer() {
