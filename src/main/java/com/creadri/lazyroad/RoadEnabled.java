@@ -316,37 +316,47 @@ public class RoadEnabled {
         }
 
         int availableGap = groundY >= 0 ? (topY - groundY) : (topY);
-        int totalLimit = Math.min(availableGap, buildUntil);
 
         if (baseHeight > 0 && baseBlocks != null) {
-            if (totalLimit <= baseHeight) {
-                // Gap is smaller than or equal to base: build from bottom up towards road
-                for (int curY = groundY + 1; curY <= topY; curY++) {
-                    int baseLayer = curY - (groundY + 1); // 0 = lowest block touching ground
+            // 1. Build the base from the ground up
+            int baseBottomY = groundY + 1;
+            if (availableGap <= baseHeight) {
+                // Gap is smaller than or equal to base: build from bottom up towards road and stop
+                for (int curY = baseBottomY; curY <= topY; curY++) {
+                    int baseLayer = curY - baseBottomY; // 0 = bottom-most layer touching ground
                     if (baseLayer >= baseHeight) break;
-                    int row = baseHeight - 1 - baseLayer; // baseBlocks row
+                    int row = baseHeight - 1 - baseLayer;
                     drawPillarLayer(baseBlocks[row], width, pillarX, curY, pillarZ, z, x, dir);
                 }
                 return;
             }
 
-            // Normal gap: base fits at the bottom
-            int baseBottomY = groundY + 1;
+            // Full base fits on the ground
             for (int mh = 0; mh < baseHeight; mh++) {
                 int curY = baseBottomY + (baseHeight - 1 - mh);
                 drawPillarLayer(baseBlocks[mh], width, pillarX, curY, pillarZ, z, x, dir);
             }
 
-            // Pillar repeating core fills from topY down to the top of the base
-            int coreLimitY = baseBottomY + baseHeight;
+            // 2. Build the top pillar core downwards from topY
+            // If buildUntil is specified (> 0), core only extends down by at most buildUntil blocks.
+            // Any space between the bottom of the core and the top of the base remains air (intentional opening/gap).
+            int coreBottomLimitY = baseBottomY + baseHeight;
+            if (buildUntil < Integer.MAX_VALUE) {
+                int maxCoreY = topY - buildUntil + 1;
+                if (maxCoreY > coreBottomLimitY) {
+                    coreBottomLimitY = maxCoreY;
+                }
+            }
+
             int coreLayer = 0;
-            for (int curY = topY; curY >= coreLimitY; curY--) {
+            for (int curY = topY; curY >= coreBottomLimitY; curY--) {
                 int row = coreLayer >= coreHeight ? (coreHeight - 1) : coreLayer;
                 drawPillarLayer(coreBlocks[row], width, pillarX, curY, pillarZ, z, x, dir);
                 coreLayer++;
             }
         } else {
             // No base defined: repeating core builds down from topY until ground or buildUntil
+            int totalLimit = Math.min(availableGap, buildUntil);
             int coreLayer = 0;
             for (int curY = topY; curY > 0 && curY > (topY - totalLimit); curY--) {
                 int row = coreLayer >= coreHeight ? (coreHeight - 1) : coreLayer;
