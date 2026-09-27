@@ -704,7 +704,7 @@ public class RoadEnabled {
             RoadPart stairs = road.getStairs();
 
             newX = (tunnel || bridge) ? x - 1 : x;
-            newY = (y - oldY) > 0 ? y : y + 1;
+            newY = ((y - oldY) > 0 ? y : y + 1) - stairs.getGroundLayer();
             newZ = z;
 
             height = stairs.getHeight();
@@ -866,7 +866,7 @@ public class RoadEnabled {
             RoadPart stairs = road.getStairs();
 
             newX = (tunnel || bridge) ? x + 1 : x;
-            newY = (y - oldY) > 0 ? y : y + 1;
+            newY = ((y - oldY) > 0 ? y : y + 1) - stairs.getGroundLayer();
             newZ = z;
 
             height = stairs.getHeight();
@@ -1030,7 +1030,7 @@ public class RoadEnabled {
             RoadPart stairs = road.getStairs();
 
             newX = x;
-            newY = (y - oldY) > 0 ? y : y + 1;
+            newY = ((y - oldY) > 0 ? y : y + 1) - stairs.getGroundLayer();
             newZ = (tunnel || bridge) ? z + 1 : z;
 
             height = stairs.getHeight();
@@ -1192,7 +1192,7 @@ public class RoadEnabled {
             RoadPart stairs = road.getStairs();
 
             newX = x;
-            newY = (y - oldY) > 0 ? y : y + 1;
+            newY = ((y - oldY) > 0 ? y : y + 1) - stairs.getGroundLayer();
             newZ = (tunnel || bridge) ? z - 1 : z;
 
             height = stairs.getHeight();
