@@ -63,11 +63,24 @@ public class Pillar {
 
     public PillarPart getRoadPartToBuild(int count) {
         if (parts.isEmpty()) return null;
-        if (maxSequence == 0) return parts.get(0);
-        
-        int index = (count + getStartIndex()) % maxSequence;
-        if (index < parts.size()) {
+
+        // If template defines a 1:1 part-per-step sequence (like BigBridge with 22 parts and maxSequence 22),
+        // each part corresponds directly to a step in the sequence.
+        if (parts.size() == maxSequence && maxSequence > 0) {
+            int index = (count + getStartIndex()) % maxSequence;
             return parts.get(index);
+        }
+
+        // Modulo pattern matching based on each part's repeatEvery:
+        // Evaluates parts in order (or offset from Start Here), returning the first part whose repeatEvery triggers.
+        int startOffset = getStartIndex();
+        int effectiveCount = count + startOffset;
+        for (int i = 0; i < parts.size(); i++) {
+            PillarPart part = parts.get(i);
+            int re = part.getRepeatEvery();
+            if (re > 0 && (effectiveCount % re) == 0) {
+                return part;
+            }
         }
         return null;
     }
