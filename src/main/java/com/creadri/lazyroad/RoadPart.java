@@ -9,6 +9,7 @@ public class RoadPart implements Comparable<RoadPart> {
     private int repeatEvery;
     private Integer playerOffset;
     private boolean startHere;
+    private java.util.List<Integer> triggerPositions;
 
     public RoadPart() {}
 
@@ -43,6 +44,14 @@ public class RoadPart implements Comparable<RoadPart> {
 
     public void setPlayerOffset(Integer playerOffset) {
         this.playerOffset = playerOffset;
+    }
+
+    public java.util.List<Integer> getTriggerPositions() {
+        return triggerPositions;
+    }
+
+    public void setTriggerPositions(java.util.List<Integer> triggerPositions) {
+        this.triggerPositions = triggerPositions;
     }
 
     public boolean isStartHere() {

@@ -53,33 +53,81 @@ public class Pillar {
     }
 
     public int getStartIndex() {
-        for (int i = 0; i < parts.size(); i++) {
-            if (parts.get(i).isStartHere()) {
-                return i;
+        if (parts.isEmpty()) return 0;
+
+        PillarPart targetPart = null;
+        for (PillarPart p : parts) {
+            if (p.isStartHere()) {
+                targetPart = p;
+                break;
             }
         }
-        return 0;
+
+        if (targetPart == null) {
+            return 0;
+        }
+
+        int seq = maxSequence > 0 ? maxSequence : 1;
+
+        // If targetPart defines trigger positions, solve for offset where targetPart triggers at count 0
+        if (targetPart.getTriggerPositions() != null && !targetPart.getTriggerPositions().isEmpty()) {
+            int targetStep = targetPart.getTriggerPositions().get(0); // 1-indexed
+            return (targetStep - 1 + seq) % seq;
+        }
+
+        // If 1:1 part-per-step sequence (parts.size() == maxSequence)
+        if (parts.size() == maxSequence && maxSequence > 0) {
+            return parts.indexOf(targetPart);
+        }
+
+        // Modulo solver
+        for (int offset = 0; offset < seq; offset++) {
+            for (PillarPart p : parts) {
+                int re = p.getRepeatEvery();
+                if (re > 0 && (offset % re) == 0) {
+                    if (p == targetPart) {
+                        return offset;
+                    }
+                    break;
+                }
+            }
+        }
+
+        return parts.indexOf(targetPart);
     }
 
     public PillarPart getRoadPartToBuild(int count) {
         if (parts.isEmpty()) return null;
+        int seq = maxSequence > 0 ? maxSequence : 1;
+        int startOffset = getStartIndex();
+        int step = ((count + startOffset) % seq) + 1; // 1-indexed step in [1, seq]
 
-        // If template defines a 1:1 part-per-step sequence (like BigBridge with 22 parts and maxSequence 22),
-        // each part corresponds directly to a step in the sequence.
+        // 1. Check for parts explicitly assigned to this step via triggerPositions
+        for (PillarPart part : parts) {
+            java.util.List<Integer> triggers = part.getTriggerPositions();
+            if (triggers != null && !triggers.isEmpty()) {
+                if (triggers.contains(step)) {
+                    return part;
+                }
+            }
+        }
+
+        // 2. If template defines a 1:1 part-per-step sequence (like BigBridge with 22 parts and maxSequence 22)
+        // and no trigger positions are used, preserve direct 1:1 slot mapping
         if (parts.size() == maxSequence && maxSequence > 0) {
-            int index = (count + getStartIndex()) % maxSequence;
+            int index = (count + startOffset) % maxSequence;
             return parts.get(index);
         }
 
-        // Modulo pattern matching based on each part's repeatEvery:
-        // Evaluates parts in order (or offset from Start Here), returning the first part whose repeatEvery triggers.
-        int startOffset = getStartIndex();
+        // 3. Fall back to repeatEvery evaluation
         int effectiveCount = count + startOffset;
-        for (int i = 0; i < parts.size(); i++) {
-            PillarPart part = parts.get(i);
-            int re = part.getRepeatEvery();
-            if (re > 0 && (effectiveCount % re) == 0) {
-                return part;
+        for (PillarPart part : parts) {
+            java.util.List<Integer> triggers = part.getTriggerPositions();
+            if (triggers == null || triggers.isEmpty()) {
+                int re = part.getRepeatEvery();
+                if (re > 0 && (effectiveCount % re) == 0) {
+                    return part;
+                }
             }
         }
         return null;

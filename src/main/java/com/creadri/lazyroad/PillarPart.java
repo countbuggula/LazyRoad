@@ -9,6 +9,7 @@ public class PillarPart {
     private int width;
     private int buildUntil;
     private boolean startHere;
+    private java.util.List<Integer> triggerPositions;
     private Integer playerOffset;
 
         public String[][] getBaseBlockDatas() {
@@ -58,6 +59,14 @@ public class PillarPart {
 
     public void setPlayerOffset(Integer playerOffset) {
         this.playerOffset = playerOffset;
+    }
+
+    public java.util.List<Integer> getTriggerPositions() {
+        return triggerPositions;
+    }
+
+    public void setTriggerPositions(java.util.List<Integer> triggerPositions) {
+        this.triggerPositions = triggerPositions;
     }
 
     public boolean isStartHere() {
