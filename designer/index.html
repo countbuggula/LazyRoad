@@ -1,14 +1,41 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>LazyRoad Designer</title>
 <link rel="icon" type="image/png" href="lazyroad.png">
 <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; margin: 0; background: #282a36; color: #f8f8f2; }
-    .sidebar { width: 320px; background: #44475a; padding: 20px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; text-align: left; }
-    .main { flex-grow: 1; display: flex; flex-direction: column; padding: 20px; text-align: left; background: #282a36; }
-    canvas { background: #6272a4; border: 2px solid #50fa7b; cursor: crosshair; image-rendering: pixelated; margin-top: 10px; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; margin: 0; background: #282a36; color: #f8f8f2; overflow: hidden; }
+    .sidebar { width: 320px; background: #44475a; padding: 20px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; text-align: left; box-sizing: border-box; }
+    .main { flex-grow: 1; display: flex; flex-direction: column; padding: 20px; text-align: left; background: #282a36; box-sizing: border-box; height: 100vh; min-width: 0; overflow: hidden; }
+    .canvas-container {
+        flex-grow: 1;
+        overflow: auto;
+        margin-top: 10px;
+        background: #1e1f29;
+        border: 2px solid #44475a;
+        border-radius: 6px;
+        padding: 15px;
+        min-height: 200px;
+        box-sizing: border-box;
+        text-align: center;
+    }
+    .canvas-container::-webkit-scrollbar, .sidebar::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+    .canvas-container::-webkit-scrollbar-track, .sidebar::-webkit-scrollbar-track {
+        background: #282a36;
+        border-radius: 4px;
+    }
+    .canvas-container::-webkit-scrollbar-thumb, .sidebar::-webkit-scrollbar-thumb {
+        background: #6272a4;
+        border-radius: 4px;
+    }
+    .canvas-container::-webkit-scrollbar-thumb:hover, .sidebar::-webkit-scrollbar-thumb:hover {
+        background: #50fa7b;
+    }
+    canvas { background: #6272a4; border: 2px solid #50fa7b; cursor: crosshair; image-rendering: pixelated; display: inline-block; vertical-align: top; border-radius: 4px; }
     .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; background: #44475a; padding: 10px; border-radius: 5px; }
     input, select, button, textarea { background: #282a36; color: #f8f8f2; border: 1px solid #6272a4; padding: 5px 8px; border-radius: 4px; }
     button { background: #50fa7b; color: #282a36; font-weight: bold; cursor: pointer; border: none; }
@@ -143,7 +170,9 @@
         <button class="danger" id="deletePartBtn">Delete Part</button>
     </div>
 
-    <canvas id="editorCanvas" width="800" height="500"></canvas>
+    <div class="canvas-container" id="canvasContainer">
+        <canvas id="editorCanvas" width="800" height="500"></canvas>
+    </div>
     <p style="color:#8be9fd; font-size:12px;">Left Click: Place block | Right Click: Remove block<br>Note: Y=0 is at the bottom of the grid.</p>
 </div>
 
@@ -547,17 +576,47 @@
         ctx.fillRect(px, py, size, size);
     }
 
+function updateCanvasSize(part) {
+        if (!part) return;
+        const gridWPix = part.width * CELL_SIZE;
+        const gridHPix = part.height * CELL_SIZE;
+        
+        const topMargin = (template.type === 'road') ? 100 : 60;
+        const bottomMargin = 60;
+        const paddingX = 80;
+        
+        const container = document.getElementById('canvasContainer');
+        const contW = (container && container.clientWidth > 40) ? (container.clientWidth - 40) : 800;
+        const contH = (container && container.clientHeight > 40) ? (container.clientHeight - 40) : 500;
+        
+        const neededW = Math.max(800, contW, gridWPix + paddingX * 2);
+        const neededH = Math.max(500, contH, gridHPix + topMargin + bottomMargin);
+        
+        if (canvas.width !== neededW || canvas.height !== neededH) {
+            canvas.width = neededW;
+            canvas.height = neededH;
+        }
+    }
+
+    function getGridOffsets(part) {
+        const gridWPix = part.width * CELL_SIZE;
+        const gridHPix = part.height * CELL_SIZE;
+        const offsetX = Math.floor((canvas.width - gridWPix) / 2);
+        const topMargin = (template.type === 'road') ? 100 : 60;
+        const offsetY = Math.max(topMargin, Math.floor((canvas.height - gridHPix) / 2));
+        return { gridWPix, gridHPix, offsetX, offsetY };
+    }
+
     function draw() {
         const part = getActivePart();
         if (!part) return;
         
+        updateCanvasSize(part);
+        
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         // Offset rendering so it appears centered
-        const gridWPix = part.width * CELL_SIZE;
-        const gridHPix = part.height * CELL_SIZE;
-        const offsetX = Math.floor((canvas.width - gridWPix) / 2);
-        const offsetY = Math.floor((canvas.height - gridHPix) / 2);
+        const { gridWPix, gridHPix, offsetX, offsetY } = getGridOffsets(part);
 
         // Draw grid setup
         // In simple JSON, index 0 is ground (bottom), index H-1 is top.
@@ -580,9 +639,9 @@
                 ctx.strokeRect(drawX, drawY, CELL_SIZE, CELL_SIZE);
                 
                 const block = part.grid[y][x];
-                                if (block && block !== "minecraft:air") {
+                if (block && block !== "minecraft:air") {
                     const colors = getBlockColors(block);
-                                        fillCustomShape(ctx, drawX + 1, drawY + 1, CELL_SIZE - 2, block, colors.bg);
+                    fillCustomShape(ctx, drawX + 1, drawY + 1, CELL_SIZE - 2, block, colors.bg);
                     ctx.fillStyle = colors.fg;
                     ctx.font = '10px Arial';
                     ctx.textAlign = 'center';
@@ -614,7 +673,7 @@
             // Yes. In LazyRoad, groundLayer is the block they walk ON.
             const drawX = offsetX + cx * CELL_SIZE;
             
-            // The block they walk ON is at row `part.groundLayer`.
+            // The block they walk ON is at row part.groundLayer.
             // So its top coordinate is drawY. Feet start there.
             let floorBlockYPix;
             if (template.type === 'pillar') {
@@ -632,7 +691,10 @@
         }
     }
 
-    canvas.addEventListener('mousedown', (e) => {
+    let isMouseDown = false;
+    let lastPaintedCell = { x: -1, y: -1 };
+
+    function handleBlockClick(e) {
         const part = getActivePart();
         if (!part) return;
         
@@ -643,10 +705,7 @@
         const mouseX = (e.clientX - rect.left) * scaleX;
         const mouseY = (e.clientY - rect.top) * scaleY;
         
-        const gridWPix = part.width * CELL_SIZE;
-        const gridHPix = part.height * CELL_SIZE;
-        const offsetX = Math.floor((canvas.width - gridWPix) / 2);
-        const offsetY = Math.floor((canvas.height - gridHPix) / 2);
+        const { offsetX, offsetY } = getGridOffsets(part);
         
         const x = Math.floor((mouseX - offsetX) / CELL_SIZE);
         const drawY = Math.floor((mouseY - offsetY) / CELL_SIZE);
@@ -655,13 +714,20 @@
         const y = (template.type === 'pillar') ? drawY : part.height - 1 - drawY;
         
         if (x >= 0 && x < part.width && y >= 0 && y < part.height) {
+            if (lastPaintedCell.x === x && lastPaintedCell.y === y && e.type === 'mousemove') {
+                return;
+            }
+            lastPaintedCell = { x, y };
+
             let material = document.getElementById('activeMaterial').value.trim();
             
-            if (e.button === 0) { // Left click
+            if (e.buttons === 1) { // Left click
                 if (material === '') {
-                    let cellData = part.grid[y][x];
-                    if (cellData && cellData !== 'minecraft:air') {
-                        document.getElementById('activeMaterial').value = cellData.replace(/^minecraft:/, '');
+                    if (e.type === 'mousedown') {
+                        let cellData = part.grid[y][x];
+                        if (cellData && cellData !== 'minecraft:air') {
+                            document.getElementById('activeMaterial').value = cellData.replace(/^minecraft:/, '');
+                        }
                     }
                 } else {
                     if (!material.includes(':')) {
@@ -671,14 +737,31 @@
                     addRecentBlock(material);
                     draw();
                 }
-            } else if (e.button === 2) { // Right click
+            } else if (e.buttons === 2) { // Right click
                 part.grid[y][x] = "minecraft:air";
                 draw();
             }
         }
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+        isMouseDown = true;
+        handleBlockClick(e);
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+        if (isMouseDown && e.buttons !== 0) {
+            handleBlockClick(e);
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        isMouseDown = false;
+        lastPaintedCell = { x: -1, y: -1 };
     });
     
     canvas.addEventListener('contextmenu', e => e.preventDefault());
+    window.addEventListener('resize', () => draw());
     playerImg.onload = draw;
     
     // UI Helpers

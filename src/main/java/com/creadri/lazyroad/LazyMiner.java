@@ -1,23 +1,18 @@
 package com.creadri.lazyroad;
 
-import com.google.gson.Gson;
-import java.nio.file.Files;
-import java.nio.charset.StandardCharsets;
-
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Random;
+import java.util.HashMap;
+import java.util.List;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
-import org.bukkit.block.Chest;
-import org.bukkit.block.DoubleChest;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.configuration.file.YamlConfiguration;
 
 /**
  *
@@ -42,67 +37,123 @@ public class LazyMiner {
     }
 
     public boolean SaveBlock(Block b) {
-        if (checkIfOne(b)) {
-            ItemStack drop = getDrop(b.getDrops(new org.bukkit.inventory.ItemStack(org.bukkit.Material.DIAMOND_PICKAXE)));
-            if (!data.getDrops().isEmpty()) {
-                for (int i = 0; i < data.getDrops().size(); i++) {
-                    org.bukkit.inventory.ItemStack item = data.get(i);
-                    if ((drop.getType() == item.getType()) && (item.getMaxStackSize() != item.getAmount())) {
-                        item.setAmount(item.getAmount() + 1);
-                        return true;
-                    }
-                }
-                data.put(data.size(), drop);
-                return true;
-            } else {
-                data.put(0, drop);
-                return true;
-            }
-        } else {
+        if (!checkIfOne(b)) {
             return false;
+        }
+
+        ItemStack tool = player.getInventory().getItemInMainHand();
+        Collection<ItemStack> drops = null;
+        if (tool != null && !tool.getType().isAir()) {
+            try {
+                drops = b.getDrops(tool, player);
+            } catch (Exception ignored) {}
+        }
+        if (drops == null || drops.isEmpty()) {
+            try {
+                drops = b.getDrops(new ItemStack(Material.DIAMOND_PICKAXE));
+            } catch (Exception ignored) {}
+        }
+        if (drops == null || drops.isEmpty()) {
+            return false;
+        }
+
+        for (ItemStack drop : drops) {
+            if (drop != null && !drop.getType().isAir() && drop.getAmount() > 0) {
+                addDrop(drop.clone());
+            }
+        }
+        return true;
+    }
+
+    private void addDrop(ItemStack drop) {
+        int toAdd = drop.getAmount();
+        int maxStack = drop.getMaxStackSize();
+
+        for (ItemStack existing : data.getDrops().values()) {
+            if (existing != null && existing.isSimilar(drop) && existing.getAmount() < maxStack) {
+                int space = maxStack - existing.getAmount();
+                if (toAdd <= space) {
+                    existing.setAmount(existing.getAmount() + toAdd);
+                    toAdd = 0;
+                    break;
+                } else {
+                    existing.setAmount(maxStack);
+                    toAdd -= space;
+                }
+            }
+        }
+
+        while (toAdd > 0) {
+            int stackAmount = Math.min(toAdd, maxStack);
+            ItemStack newStack = drop.clone();
+            newStack.setAmount(stackAmount);
+            data.put(data.size(), newStack);
+            toAdd -= stackAmount;
         }
     }
 
     private boolean checkIfOne(Block b) {
-        if (!b.getType().isSolid()) return false;
-        // The old code used a custom checkIds, but since IDs are gone we'll just allow solid blocks to be mined unless they are bedrock.
-        if (b.getType() == org.bukkit.Material.BEDROCK) return false;
+        if (b == null) return false;
+        Material mat = b.getType();
+        if (!mat.isSolid()) return false;
+        if (mat == Material.BEDROCK || mat == Material.BARRIER) return false;
         return true;
     }
 
-    private ItemStack getDrop(Collection<ItemStack> d) {
-        Random randomePicker = new Random();
-        int choice = randomePicker.nextInt(d.size());
-        ItemStack[] tmp = new ItemStack[d.size()];
-        tmp = d.toArray(tmp);
-        return tmp[choice];
-    }
-
     public void putBlocks() {
-        Block t = player.getTargetBlock(null, 10);
+        Block t = player.getTargetBlock((java.util.Set<Material>) null, 10);
+        if (t == null) {
+            player.sendMessage(plugin.getMessage("messages.lazyminer.notChest"));
+            return;
+        }
         BlockState b = t.getState();
-        if (b instanceof DoubleChest || b instanceof Chest) {
-            ItemStack[] d = new ItemStack[data.getDrops().size()];
-            for (int i = 0; i < data.getDrops().size(); i++) {
-                d[i] = data.getDrops().get(i);
+        if (!(b instanceof org.bukkit.block.Container)) {
+            player.sendMessage(plugin.getMessage("messages.lazyminer.notChest"));
+            return;
+        }
+
+        if (data.size() == 0) {
+            player.sendMessage(plugin.getMessage("messages.lazyminer.emptyStore"));
+            return;
+        }
+
+        org.bukkit.block.Container container = (org.bukkit.block.Container) b;
+        Inventory chestInv = container.getInventory();
+
+        List<ItemStack> toDeposit = new ArrayList<>();
+        int initialTotalItems = 0;
+        for (ItemStack is : data.getDrops().values()) {
+            if (is != null && !is.getType().isAir() && is.getAmount() > 0) {
+                toDeposit.add(is);
+                initialTotalItems += is.getAmount();
             }
-            if (b instanceof DoubleChest) {
-                DoubleChest chest = (DoubleChest) b;
-                Inventory chestInv = chest.getInventory();
-                data.setDrops(chestInv.addItem(d));
-            } else {
-                Chest chest = (Chest) b;
-                Inventory chestInv = chest.getInventory();
-                data.setDrops(chestInv.addItem(d));
-            }
-            if (data.size() > 0) {
-                player.sendMessage(plugin.getMessage("messages.lazyminer.notempty", data.size()));
-            } else {
-                player.sendMessage(plugin.getMessage("messages.lazyminer.empty"));
-            }
+        }
+
+        if (toDeposit.isEmpty()) {
+            data.getDrops().clear();
+            player.sendMessage(plugin.getMessage("messages.lazyminer.emptyStore"));
             saveMinerData();
+            return;
+        }
+
+        HashMap<Integer, ItemStack> remaining = chestInv.addItem(toDeposit.toArray(new ItemStack[0]));
+        data.getDrops().clear();
+        int remainingTotalItems = 0;
+        int idx = 0;
+        for (ItemStack is : remaining.values()) {
+            if (is != null && !is.getType().isAir() && is.getAmount() > 0) {
+                remainingTotalItems += is.getAmount();
+                data.put(idx++, is);
+            }
+        }
+        saveMinerData();
+
+        if (remaining.isEmpty()) {
+            player.sendMessage(plugin.getMessage("messages.lazyminer.empty"));
+        } else if (remainingTotalItems == initialTotalItems) {
+            player.sendMessage(plugin.getMessage("messages.lazyminer.chestFull"));
         } else {
-            player.sendMessage("Must be looking at a chest for LazyRoad to put drops in.");
+            player.sendMessage(plugin.getMessage("messages.lazyminer.chestPartialFull", data.size()));
         }
     }
 
@@ -122,31 +173,37 @@ public class LazyMiner {
         data.setEnabled(true);
     }
 
-    public void addCheckID(int id){
+    public void addCheckID(int id) {
         data.addACheckID(id);
     }
 
-    public boolean removeCheckId(int id){
+    public boolean removeCheckId(int id) {
         return data.removeACheckId(id);
     }
 
-    public void saveMinerData(){
+    public void saveMinerData() {
         File folder = new File(plugin.getDataFolder(), "miners");
-        File saveFile = new File(folder, player.getName().concat(".json"));
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
+        File saveFile = new File(folder, player.getName().concat(".yml"));
         try {
-
-            Gson gson = new Gson();
-            String json = gson.toJson(data);
-            Files.writeString(saveFile.toPath(), json);
-
+            YamlConfiguration yaml = new YamlConfiguration();
+            yaml.set("enabled", data.isEnabled());
+            List<ItemStack> dropList = new ArrayList<>();
+            for (ItemStack is : data.getDrops().values()) {
+                if (is != null && !is.getType().isAir() && is.getAmount() > 0) {
+                    dropList.add(is);
+                }
+            }
+            yaml.set("drops", dropList);
+            yaml.save(saveFile);
         } catch (Exception ex) {
-            player.sendMessage(ChatColor.DARK_RED + "An error occured when trying to save " + saveFile.getName());
-            LazyRoad.log.severe(ChatColor.DARK_RED + "An error occured when trying to save " + saveFile.getName());
-            LazyRoad.log.severe(ex.toString());
+            LazyRoad.log.severe("[LazyRoad] An error occurred when trying to save " + saveFile.getName() + ": " + ex.getMessage());
         }
     }
 
-    public String checkIdsToString(){
+    public String checkIdsToString() {
         return data.checkIdsToString();
     }
 }

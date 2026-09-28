@@ -28,7 +28,6 @@ public class LazyRoad extends JavaPlugin {
     private boolean eventRegistered = false;
     // player properties
     private HashSet<String> playerPropStraight = new HashSet<String>();
-    private HashSet<String> playerPropDrops = new HashSet<String>();
     private HashMap<String, LazyMiner> lazyMiners = new HashMap<String, LazyMiner>();
     // roads and pillars
     private HashMap<String, Road> roads = new HashMap<String, Road>();
@@ -147,53 +146,51 @@ public class LazyRoad extends JavaPlugin {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command cmd, String alias, String[] args) {
     	List<String> completions = new ArrayList<String>();
+    	String cmdName = cmd.getName().toLowerCase();
+    	String cmdAlias = alias.toLowerCase();
     	
     	if (
-			alias.equalsIgnoreCase("lr") || alias.equalsIgnoreCase("road") || 
-			alias.equalsIgnoreCase("lr") || alias.equalsIgnoreCase("tunnel") || 
-			alias.equalsIgnoreCase("lb") || alias.equalsIgnoreCase("bridge")
+			cmdName.equals("road") || cmdAlias.equals("road") || cmdAlias.equals("lr") || 
+			cmdName.equals("tunnel") || cmdAlias.equals("tunnel") || cmdAlias.equals("lt") || 
+			cmdName.equals("bridge") || cmdAlias.equals("bridge") || cmdAlias.equals("lb")
     	) {
     		if (args.length == 1) {
-	    		if ("reload".startsWith(args[0]))
+	    		if ("reload".startsWith(args[0].toLowerCase()))
 	    			completions.add("reload");
-	    		if ("stop".startsWith(args[0]))
+	    		if ("stop".startsWith(args[0].toLowerCase()))
 	    			completions.add("stop");
-	    		if ("undo".startsWith(args[0]))
+	    		if ("undo".startsWith(args[0].toLowerCase()))
 	    			completions.add("undo");
-	    		if ("straight".startsWith(args[0]))
+	    		if ("straight".startsWith(args[0].toLowerCase()))
 	    			completions.add("straight");
-	    		if ("drops".startsWith(args[0]))
-	    			completions.add("drops");
-	    		if ("straight".startsWith(args[0]))
-	    			completions.add("straight");
-	    		if ("up".startsWith(args[0]))
+	    		if ("up".startsWith(args[0].toLowerCase()))
 	    			completions.add("up");
-	    		if ("down".startsWith(args[0]))
+	    		if ("down".startsWith(args[0].toLowerCase()))
 	    			completions.add("down");
-	    		if ("normal".startsWith(args[0]))
+	    		if ("normal".startsWith(args[0].toLowerCase()))
 	    			completions.add("normal");
 	    		for (String string : roads.keySet()) {
-	    			if (string.startsWith(args[0]))
+	    			if (string.toLowerCase().startsWith(args[0].toLowerCase()))
 	        			completions.add(string);
 	    		}
     		}
-    		else if (args.length == 2 && (alias.equalsIgnoreCase("lb") || alias.equalsIgnoreCase("bridge"))) {
+    		else if (args.length == 2 && (cmdName.equals("bridge") || cmdAlias.equals("bridge") || cmdAlias.equals("lb"))) {
     			for (String string : pillars.keySet()) {
-	    			if (string.startsWith(args[1]))
+	    			if (string.toLowerCase().startsWith(args[1].toLowerCase()))
 	        			completions.add(string);
 	    		}
     		}
     	}
     	
-    	else if (alias.equalsIgnoreCase("lm") || alias.equalsIgnoreCase("lazyminer")) {
+    	else if (cmdName.equals("lazyminer") || cmdAlias.equals("lazyminer") || cmdAlias.equals("lm")) {
     		if (args.length == 1) {
-    			if ("ids".startsWith(args[0]))
+    			if ("ids".startsWith(args[0].toLowerCase()))
 	    			completions.add("ids");
-    			if ("addid".startsWith(args[0]))
+    			if ("addid".startsWith(args[0].toLowerCase()))
 	    			completions.add("addid");
-    			if ("removeid".startsWith(args[0]))
+    			if ("removeid".startsWith(args[0].toLowerCase()))
 	    			completions.add("removeid");
-    			if ("store".startsWith(args[0]))
+    			if ("store".startsWith(args[0].toLowerCase()))
 	    			completions.add("store");
     		}
     	}
@@ -279,6 +276,9 @@ public class LazyRoad extends JavaPlugin {
      */
     public String getMessage(String node, Object... values) {
         String msg = getConfig().getString(node);
+        if (msg == null) {
+            return node;
+        }
         msg = replaceColors(msg);
         if (values != null) {
             for (int j = 0; j < values.length; j++) {
@@ -378,28 +378,17 @@ public class LazyRoad extends JavaPlugin {
     public void setRoads(HashMap<String, Road> roads) {
         this.roads = roads;
     }
+
     /**
-     * Gets if the player should not lay the road straight
+     * Gets if the player should lay the road straight
      * @param name
      * @return
      */
-    public boolean getPlayerPropDrops(String name) {
-        return playerPropDrops.contains(name);
-    }
-
-    public void setPlayerPropDrops(String name, boolean state) {
-        if (state) {
-            playerPropDrops.add(name);
-        } else {
-            playerPropDrops.remove(name);
-        }
-    }
-
     public boolean getPlayerPropStraight(String name) {
         return playerPropStraight.contains(name);
     }
     /**
-     * Sets if the player should not lay the road straight
+     * Sets if the player should lay the road straight
      * @param name
      * @param state
      */
@@ -419,4 +408,3 @@ public class LazyRoad extends JavaPlugin {
     }
     
 }
-

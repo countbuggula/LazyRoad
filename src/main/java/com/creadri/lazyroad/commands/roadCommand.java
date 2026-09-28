@@ -30,8 +30,8 @@ public class roadCommand extends CommandHandler {
         }
         Player player = (Player) sender;
         String playerName = player.getName();
-        boolean tunnel = label.equalsIgnoreCase("tunnel");
-        boolean bridge = label.equalsIgnoreCase("bridge");
+        boolean tunnel = label.equalsIgnoreCase("tunnel") || label.equalsIgnoreCase("lt");
+        boolean bridge = label.equalsIgnoreCase("bridge") || label.equalsIgnoreCase("lb");
         LazyMiner lm = plugin.getLazyMiner(playerName);
 
         switch (args.length) {
@@ -104,14 +104,8 @@ public class roadCommand extends CommandHandler {
                     }
                     return true;
 
-                } else if (player.hasPermission("lazyroad.drops") && args[0].equalsIgnoreCase("drops")) {
-                    if (plugin.getPlayerPropDrops(playerName)) {
-                        plugin.setPlayerPropDrops(playerName, false);
-                        player.sendMessage(org.bukkit.ChatColor.AQUA + "Tunnel drops disabled.");
-                    } else {
-                        plugin.setPlayerPropDrops(playerName, true);
-                        player.sendMessage(org.bukkit.ChatColor.AQUA + "Tunnel drops enabled. Tunneling will now drop items.");
-                    }
+                } else if (args[0].equalsIgnoreCase("drops")) {
+                    player.sendMessage(org.bukkit.ChatColor.AQUA + "The /drops command has been consolidated into LazyMiner (/lm). Use /lm to collect mined items, and /lm store to deposit into a chest.");
                     return true;
                 } else if (player.hasPermission("lazyroad.straight") && args[0].equalsIgnoreCase("straight")) {
                     /**
@@ -119,10 +113,14 @@ public class roadCommand extends CommandHandler {
                      */
                     if (plugin.getPlayerPropStraight(playerName)) {
                         plugin.setPlayerPropStraight(playerName, false);
-                        player.sendMessage(plugin.getMessage("messages.straightEnabled"));
+                        player.sendMessage(plugin.getMessage("messages.straightDisabled"));
                     } else {
                         plugin.setPlayerPropStraight(playerName, true);
-                        player.sendMessage(plugin.getMessage("messages.straightDisabled"));
+                        player.sendMessage(plugin.getMessage("messages.straightEnabled"));
+                    }
+                    RoadEnabled activeRoad = plugin.getPlayerListener().getBuilder(playerName);
+                    if (activeRoad != null && !activeRoad.isBridge()) {
+                        activeRoad.setStraight(plugin.getPlayerPropStraight(playerName));
                     }
                     return true;
                 } else {
@@ -154,9 +152,7 @@ public class roadCommand extends CommandHandler {
                             if (bridge) {
                                 re.setBridge(true);
                             }
-                            if (plugin.getPlayerPropStraight(playerName)) {
-                                re.setStraight(false);
-                            }
+                            re.setStraight(plugin.getPlayerPropStraight(playerName));
 
                             if (plugin.getPlayerListener().addBuilder(playerName, re)) {
                                 player.sendMessage(plugin.getMessage("messages.beginBuilding"));
@@ -195,9 +191,7 @@ public class roadCommand extends CommandHandler {
                         }
                         re.setPillar(pillar);
 
-                        if (plugin.getPlayerPropStraight(playerName)) {
-                            re.setStraight(false);
-                        }
+                        re.setStraight(plugin.getPlayerPropStraight(playerName));
 
                         if (plugin.getPlayerListener().addBuilder(playerName, re)) {
                             player.sendMessage(plugin.getMessage("messages.beginBuilding"));
@@ -234,12 +228,10 @@ public class roadCommand extends CommandHandler {
                         if (tunnel) {
                             re.setTunnel(true);
                         }
-                            if (bridge) {
-                                re.setBridge(true);
-                            }
-                        if (plugin.getPlayerPropStraight(playerName)) {
-                            re.setStraight(false);
+                        if (bridge) {
+                            re.setBridge(true);
                         }
+                        re.setStraight(plugin.getPlayerPropStraight(playerName));
 
                         if (plugin.getPlayerListener().addBuilder(playerName, re)) {
                             player.sendMessage(plugin.getMessage("messages.beginBuilding"));
@@ -282,9 +274,7 @@ public class roadCommand extends CommandHandler {
                         }
                         re.setPillar(pillar);
 
-                        if (plugin.getPlayerPropStraight(playerName)) {
-                            re.setStraight(false);
-                        }
+                        re.setStraight(plugin.getPlayerPropStraight(playerName));
 
                         if (plugin.getPlayerListener().addBuilder(playerName, re)) {
                             player.sendMessage(plugin.getMessage("messages.beginBuilding"));

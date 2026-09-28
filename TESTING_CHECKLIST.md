@@ -44,11 +44,19 @@ Use this checklist prior to packaging and tagging any new Release Candidate (RC)
 
 ---
 
-### 6. Tunnels & Excavation
-- [ ] **Tunnel Clearance**: Run `/lt <road>` through a mountain. Verify the tunnel bores out the bounding box cleanly with headroom.
-- [ ] **Drops Toggle (`/lr drops`)**:
-  - [ ] With drops disabled: blocks clear instantly without item entity lag.
-  - [ ] With drops enabled: broken blocks drop items naturally to the player.
+### 6. Tunnels & LazyMiner Excavation (/lt, /lm)
+- [ ] **Tunnel Clearance**: Run /lt <road> through a mountain. Verify the tunnel bores out the bounding box cleanly with headroom.
+- [ ] **Voiding without LazyMiner**: With /lm disabled, excavated tunnel blocks void cleanly (no ground entity clutter or lag).
+- [ ] **Deprecated /drops Command**: Run /lr drops or /lt drops and verify it informs you that /drops is consolidated into /lm.
+- [ ] **LazyMiner Toggle (/lm)**: Enable LazyMiner with /lm (requires lazyroad.lazyminer permission).
+- [ ] **Excavation Collection**: Tunnel or build roads through terrain with /lm enabled; verify excavated blocks are accumulated into virtual storage without dropping loose entities.
+- [ ] **Deposit into Chest (/lm store)**:
+  - [ ] Run /lm store with no stored items; verify message informs you that you have no stored items to deposit.
+  - [ ] Run /lm store while not looking at a chest/container; verify helpful error message.
+  - [ ] Look at an empty chest and run /lm store; verify all stored blocks deposit and virtual buffer empties.
+  - [ ] Look at a completely full chest and run /lm store; verify warning that chest is full, items remain in buffer, and prompts you to select another chest.
+  - [ ] Look at a chest with only a few empty slots; run /lm store; verify it deposits what it can and reports the exact number of remaining stacks.
+  - [ ] Look at a second chest and run /lm store again to finish offloading the remaining items.
 
 ---
 

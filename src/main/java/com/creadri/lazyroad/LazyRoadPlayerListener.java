@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import org.bukkit.entity.Player;
@@ -19,6 +20,8 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.configuration.file.YamlConfiguration;
 
 /**
  * Handle events for all Player related events
@@ -30,13 +33,6 @@ public class LazyRoadPlayerListener implements Listener {
     private final LazyRoad plugin;
     private HashMap<String, RoadEnabled> builders;
     private HashMap<String, Stack<Undo>> undoers;
-    private FilenameFilter filenameFilter = new FilenameFilter() {
-
-        @Override
-        public boolean accept(File dir, String name) {
-            return name.endsWith(".ser");
-        }
-    };
 
     /**
      *
@@ -81,50 +77,50 @@ public class LazyRoadPlayerListener implements Listener {
 
         removeBuilder(player);
 
-        //LazyRoad.messages.sendPlayerMessage(event.getPlayer(), "messages.teleported");
         event.getPlayer().sendMessage(plugin.getMessage("messages.teleported"));
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        File pl = null;
-        File MinerFolder = new File(plugin.getDataFolder(), "miners");
-        try {
-            if (!MinerFolder.mkdir()) {
-                File[] pls = MinerFolder.listFiles(filenameFilter);
-                if (pls.length > 0) {
-                    for (File file : pls) {
-                        if (file.getName().equalsIgnoreCase(player.getName().toLowerCase() + ".ser")) {
-                            pl = file;
-                            break;
+        File minerFolder = new File(plugin.getDataFolder(), "miners");
+        if (!minerFolder.exists()) {
+            minerFolder.mkdirs();
+        }
+        File saveFile = new File(minerFolder, player.getName() + ".yml");
+        if (saveFile.exists()) {
+            try {
+                YamlConfiguration yaml = YamlConfiguration.loadConfiguration(saveFile);
+                boolean enabled = yaml.getBoolean("enabled", false);
+                List<?> list = yaml.getList("drops");
+                Map<Integer, ItemStack> drops = new HashMap<Integer, ItemStack>();
+                if (list != null) {
+                    int idx = 0;
+                    for (Object obj : list) {
+                        if (obj instanceof ItemStack) {
+                            drops.put(idx++, (ItemStack) obj);
                         }
                     }
-
-                    ObjectInputStream ois = new ObjectInputStream(new FileInputStream(pl));
-
-                    Object raw = ois.readObject();
-                    if (raw instanceof Map) {
-                        MinerData minerData = MinerData.deserialize((Map<String, Object>) raw);
-                        if (!player.hasPermission("lazyroad.lazyminer")) {
-                            minerData.setEnabled(false);
-                        }
-                        plugin.putLazyMiner(player.getName(), new LazyMiner(plugin, player, minerData));
-                    }
-                    ois.close();
-
                 }
+                int[] checkIds = plugin.getCheckIds();
+                MinerData minerData = new MinerData(checkIds != null ? checkIds : new int[0], drops, enabled);
+                if (!player.hasPermission("lazyroad.lazyminer")) {
+                    minerData.setEnabled(false);
+                }
+                plugin.putLazyMiner(player.getName(), new LazyMiner(plugin, player, minerData));
+            } catch (Exception ex) {
+                plugin.log.warning("[LazyRoad] Could not load miner data for " + player.getName() + ": " + ex.getMessage());
             }
-        } catch (IOException iOException) {
-            plugin.log.warning("[LazyRoad] An error occured while opening the Miner file " + event.getPlayer().getName() + ".ser !");
-        } catch (ClassNotFoundException ex) {
-            plugin.log.warning("[LazyRoad] An error occured while parsing the Miner file " + event.getPlayer().getName() + ".ser !");
         }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerLeave(PlayerQuitEvent event) {
-        plugin.removeMiner(event.getPlayer().getName());
+        LazyMiner lm = plugin.getLazyMiner(event.getPlayer().getName());
+        if (lm != null) {
+            lm.saveMinerData();
+            plugin.removeMiner(event.getPlayer().getName());
+        }
     }
 
     public boolean addBuilder(String player, RoadEnabled road) {
@@ -134,6 +130,10 @@ public class LazyRoadPlayerListener implements Listener {
 
         builders.put(player, road);
         return true;
+    }
+
+    public RoadEnabled getBuilder(String player) {
+        return builders.get(player);
     }
 
     public RoadEnabled setForceUp(String player) {

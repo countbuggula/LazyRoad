@@ -93,19 +93,37 @@ public class Road {
         if (parts.isEmpty()) return null;
         int seq = maxSequence > 0 ? maxSequence : 1;
         int startOffset = getStartIndex();
-        int step = ((count + startOffset) % seq) + 1; // 1-indexed step in [1, seq]
 
-        // 1. Check for parts explicitly assigned to this step via triggerPositions
-        for (RoadPart part : parts) {
-            java.util.List<Integer> triggers = part.getTriggerPositions();
-            if (triggers != null && !triggers.isEmpty()) {
-                if (triggers.contains(step)) {
-                    return part;
-                }
+        // Check if any part uses triggerPositions
+        boolean hasTriggerPositions = false;
+        for (RoadPart p : parts) {
+            if (p.getTriggerPositions() != null && !p.getTriggerPositions().isEmpty()) {
+                hasTriggerPositions = true;
+                break;
             }
         }
 
-        // 2. Fall back to repeatEvery evaluation
+        // 1. If template uses triggerPositions, evaluate steps in [1, seq]
+        // Count 0 is step 1, count 1 is step 2, etc. (unless shifted by startHere).
+        // Only steps with matching triggerPositions build; all other steps return null.
+        if (hasTriggerPositions) {
+            int step = ((count + startOffset) % seq) + 1; // 1-indexed step in [1, seq]
+            for (RoadPart part : parts) {
+                java.util.List<Integer> triggers = part.getTriggerPositions();
+                if (triggers != null && triggers.contains(step)) {
+                    return part;
+                }
+            }
+            return null;
+        }
+
+        // 2. If template defines a 1:1 part-per-step sequence (like BigBridge with 22 parts and maxSequence 22)
+        if (parts.size() == maxSequence && maxSequence > 0) {
+            int index = (count + startOffset) % maxSequence;
+            return parts.get(index);
+        }
+
+        // 3. Fall back to repeatEvery evaluation
         int effectiveCount = count + startOffset;
         for (RoadPart part : parts) {
             java.util.List<Integer> triggers = part.getTriggerPositions();

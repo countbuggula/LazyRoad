@@ -259,6 +259,12 @@ public class RoadEnabled {
             }
             if (b.getBlockData().matches(targetData)) return;
             undo.put(b);
+            if (!b.getType().isAir()) {
+                LazyMiner miner = plugin.getLazyMiner(player.getName());
+                if (miner != null && miner.enabled() && player.hasPermission("lazyroad.lazyminer")) {
+                    miner.SaveBlock(b);
+                }
+            }
             if (!bridge && !b.getType().isAir() && (targetData.getMaterial().isAir() || targetData.getMaterial().isTransparent())) {
                 try {
                     org.bukkit.event.block.BlockDamageEvent event = new org.bukkit.event.block.BlockDamageEvent(
@@ -705,11 +711,11 @@ public class RoadEnabled {
                     );
                     org.bukkit.Bukkit.getPluginManager().callEvent(event);
                     
-                    if (plugin.getPlayerPropDrops(player.getName())) {
-                        b.breakNaturally(player.getInventory().getItemInMainHand());
-                    } else {
-                        b.setType(org.bukkit.Material.AIR);
+                    LazyMiner miner = plugin.getLazyMiner(player.getName());
+                    if (miner != null && miner.enabled() && player.hasPermission("lazyroad.lazyminer")) {
+                        miner.SaveBlock(b);
                     }
+                    b.setType(org.bukkit.Material.AIR);
                 }
             }
         }
