@@ -8,9 +8,9 @@ Originally created by **creadri**, this project has been fully overhauled and mo
 ---
 
 ## Interactive Web Designer
-**[Open the Interactive Web Designer](designer/index.html)**
+**[Open the Interactive Web Designer (Live on GitHub Pages)](https://countbuggula.github.io/LazyRoad/)**
 
-LazyRoad includes a standalone, offline Web UI designer tool (located in [`designer/index.html`](file:///W:/temp/tmp/LazyRoad/designer/index.html)). This point-and-click editor allows you to visually author road layers, design custom stairs, and build multi-part pillar architectures with modern block states (orientations, slabs, hanging lanterns, and corner rotation logic) and instantly export ready-to-use JSON configs!
+LazyRoad includes a standalone Web UI designer tool hosted live on GitHub Pages at **[countbuggula.github.io/LazyRoad](https://countbuggula.github.io/LazyRoad/)** (or locally via [`index.html`](index.html)). This point-and-click editor allows you to visually author road layers, design custom stairs, and build multi-part pillar architectures with modern block states (orientations, slabs, hanging lanterns, and corner rotation logic) and instantly export ready-to-use JSON configs!
 
 * **Dynamic Canvas Scaling**: Automatically expands editor dimensions for tall structures ($\ge 13$ blocks) and wide profiles without grid clipping.
 * **Scrollable Viewport**: Smoothly navigate large designs with dedicated custom scrollbars while keeping toolbars docked.
@@ -129,8 +129,8 @@ LazyRoad provides granular permissions for server administrators:
 
 ## Regression Testing Suite
 A comprehensive test suite is available for verifying server features and template generation:
-* **Interactive Web Tracker**: [`TESTING_CHECKLIST.html`](file:///W:/temp/tmp/LazyRoad/TESTING_CHECKLIST.html) (open directly in any browser for interactive checkbox tracking with automatic local storage save).
-* **Markdown Checklist**: [`TESTING_CHECKLIST.md`](file:///W:/temp/tmp/LazyRoad/TESTING_CHECKLIST.md).
+* **Interactive Web Tracker**: `TESTING_CHECKLIST.html` (open directly in any browser for interactive checkbox tracking with automatic local storage save).
+* **Markdown Checklist**: `TESTING_CHECKLIST.md`.
 
 ---
 
