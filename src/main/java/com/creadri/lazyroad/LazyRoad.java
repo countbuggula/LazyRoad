@@ -2,7 +2,6 @@ package com.creadri.lazyroad;
 
 import com.creadri.lazyroad.commands.LazyMinerCommand;
 import com.creadri.lazyroad.commands.roadCommand;
-import com.creadri.util.FileManager;
 import com.creadri.util.Messages;
 import java.io.*;
 import java.util.List;
@@ -58,13 +57,14 @@ public class LazyRoad extends JavaPlugin {
         // configuration files
         try {
 
-                        roadsDirectory = new File(getDataFolder(), "roads");
+            roadsDirectory = new File(getDataFolder(), "roads");
             pillarsDirectory = new File(getDataFolder(), "pillars");
 
             if (!roadsDirectory.exists()) roadsDirectory.mkdirs();
             if (!pillarsDirectory.exists()) pillarsDirectory.mkdirs();
 
-            PluginUtils.extractResourceZip(this, "defaultRoads.zip", getDataFolder()); PluginUtils.extractResourceZip(this, "defaultPillars.zip", getDataFolder());
+            PluginUtils.extractResourceZip(this, "defaultRoads.zip", getDataFolder());
+            PluginUtils.extractResourceZip(this, "defaultPillars.zip", getDataFolder());
 
             // load roads and pillars
             loadRoads();
